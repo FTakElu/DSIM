@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Monitor de Temperatura em Tempo Real</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; }
+        #temperatura { font-size: 3em; text-align: center; margin: 20px 0; }
+        #historico { margin-top: 20px; }
+        .temp-item { padding: 5px; border-bottom: 1px solid #eee; }
+    </style>
+</head>
+<body>
+    <h1>Monitor de Temperatura</h1>
+    <div id="temperatura">-- °C</div>
+    <div id="historico"></div>
+
+    <script>
+        const temperaturaElement = document.getElementById('temperatura');
+        const historicoElement = document.getElementById('historico');
+        
+        // Conecta ao WebSocket
+        const ws = new WebSocket('ws://localhost:3000');
+        
+        ws.onopen = () => {
+            console.log('Conectado ao servidor WebSocket');
+        };
+        
+        ws.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            
+            if (data.type === 'temperatura') {
+                // Atualiza a temperatura atual
+                temperaturaElement.textContent = `${data.data} °C`;
+                
+                /* Adiciona ao histórico
+                const tempItem = document.createElement('div');
+                tempItem.className = 'temp-item';
+                tempItem.textContent = `[${new Date(data.timestamp).toLocaleTimeString()}] ${data.data} °C`;
+                historicoElement.prepend(tempItem);*/
+            }
+        };
+        
+        ws.onerror = (error) => {
+            console.error('Erro no WebSocket:', error);
+        };
+        
+        ws.onclose = () => {
+            console.log('Conexão WebSocket fechada');
+        };
+    </script>
+</body>
+</html>
+
+<!--Comando PowerShell - teste 
+
+Invoke-WebRequest -Uri "http://localhost:3000/api/temperatura" `
+  -Method POST `
+  -Headers @{"Content-Type"="application/json"} `
+  -Body '{"temperatura": 36.5}'
+  
+  -->
