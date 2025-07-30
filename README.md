@@ -1,12 +1,13 @@
 # DSIM - Dispositivo de Segurança Inteligente para Monitoramento (Intelligent Security Device for Monitoring)
-
-## About DSIM
+![NodeJS](https://img.shields.io/badge/node.js-6DA55F?style=for-the-badge&logo=node.js&logoColor=white) ![Express.js](https://img.shields.io/badge/express.js-%23404d59.svg?style=for-the-badge&logo=express&logoColor=%2361DAFB) ![JavaScript](https://img.shields.io/badge/javascript-%23323330.svg?style=for-the-badge&logo=javascript&logoColor=%23F7DF1E) ![Arduino](https://img.shields.io/badge/-Arduino-00979D?style=for-the-badge&logo=Arduino&logoColor=white) ![C++](https://img.shields.io/badge/c++-%2300599C.svg?style=for-the-badge&logo=c%2B%2B&logoColor=white) ![AmazonDynamoDB](https://img.shields.io/badge/Amazon%20DynamoDB-4053D6?style=for-the-badge&logo=Amazon%20DynamoDB&logoColor=white) ![AWS](https://img.shields.io/badge/AWS-%23FF9900.svg?style=for-the-badge&logo=amazon-aws&logoColor=white)
+![ProjectLogo](https://github.com/FTakElu/DSIM/blob/6a314038459ba6172102d95c006211f7e44ce688/Desenvolvimento/3.Implementa%C3%A7%C3%A3o/DSIM-COD/DSIM/public/images/DSIM_logoExtensa.png?raw=true)
+## 📌 About DSIM
 
 As part of a Bachelor’s thesis in Computer Science at the Federal Institute of São Paulo – Salto Campus, the DSIM (Intelligent Safety Device for Monitoring) project involves developing a wearable solution that comprises a smart bracelet paired with an integrated web platform designed to monitor users who may be in situations of risk or vulnerability. 
 
 The system continuously tracks vital signs, location, and movement, and automatically issues alerts through its smart features when necessary.By providing real-time data to both users and their caregivers or family members, DSIM promotes greater safety and autonomy, enables faster responses in critical situations, and improves the overall quality of assisted care.
 
-## Features
+## 🚀 Features
 
 - **Vital Sign Monitoring**: Real-time tracking of heart rate, body temperature, and blood oxygenation (SpO₂), with continuous data streaming for up-to-the-second health insights.
 - **Fall Detection & Alerts**: Inertial-sensor fusion (accelerometer, gyroscope, magnetometer) to detect sudden impacts or prolonged inactivity, triggering immediate SMS notifications to preconfigured caregivers.
@@ -16,7 +17,7 @@ The system continuously tracks vital signs, location, and movement, and automati
 - **Cloud Infrastructure (AWS)**: The system leverages Amazon Web Services (AWS) to ensure secure, scalable, and highly available cloud storage, processing, and deployment of health and location data.
 
 
-## Project's Code Location
+## 📁 Project's Code Location
 
 ```
 Desenvolvimento/
@@ -31,7 +32,7 @@ Desenvolvimento/
            └── PulseiraMonitoramentoPT1.ino  # Main monitoring bracelet firmware
 ```
 
-## Setup & Installation
+## 🛠️ Setup & Installation
 
 ### 1. Prerequisites
 
@@ -132,22 +133,22 @@ node server.js
 With these steps completed, your DSIM system will be fully installed and configured—from local development to cloud integration and wearable device connectivity.
 
 
-## Usage
+## 🧪 Usage
 
 - After setup, the device should collect temperature data and send it to the web dashboard.
 - Open the dashboard in your browser to view real-time values and history.
 
-## Technologies Used
+## 🧩 Technologies Used
 
 - **Languages**: C++ (Firmware), JavaScript (Backend/Frontend)
 - **Frameworks**: Express.js, WebSocket
 - **Hardware**: ESP8266 microcontroller
 - **Cloud**: AWS IoT
 
-## License
+## ⚖ License
 
 Please contact the repository owner for usage permissions.
 
-## Contact
+## 👤 Contact
 
 - Project Maintainer: [FTakElu](https://github.com/FTakElu)
