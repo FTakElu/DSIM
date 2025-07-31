@@ -72,8 +72,6 @@ node server.js
 1. Sign in to the [AWS Console](https://console.aws.amazon.com/) and activate:
 
    * **AWS IoT Core**
-   * **Lambda**
-   * **API Gateway**
    * **DynamoDB**
 
 2. In **IoT Core → Manage → Things**, click **Create Thing** and follow the wizard.
@@ -117,9 +115,7 @@ node server.js
 
 ### 6. Secure Production Setup
 
-* **AWS IAM**: create least‑privilege policies and roles for your IoT devices.
 * **Certificate Rotation**: periodically rotate device certificates/keys.
-* **AWS Cognito**: consider using for user authentication and authorization.
 * **TLS on Arduino**: for production, use `WiFiClientSecure` and load your CA, client cert & private key.
 
 ### 7. Firmware
