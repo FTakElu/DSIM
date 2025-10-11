@@ -1,0 +1,77 @@
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 5%;
+  background-color: transparent; 
+  position: absolute; 
+  top: 0;
+  left: 0;
+  width: 100%; 
+  z-index: 10;
+}
+
+.logo {
+  font-weight: bold;
+  font-size: 1.5rem;
+}
+
+.addButton {
+  padding: 0.5rem 1rem;
+  border: 2px solid #f6f6f6;
+  background-color: transparent;
+  color: #fffefe;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.titleSection {
+  text-align: center;
+  padding: 6rem 2rem; 
+  color: white;
+  
+  background-image: 
+    linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)),
+    url('../assets/background-pacientes.jpg.jpg');
+    background-size: cover; 
+    background-position: center; 
+  
+     background-attachment: fixed; 
+}
+
+.titleSection h1 {
+  font-size: 3rem;
+  margin-bottom: 0.5rem;
+}
+
+.titleSection p {
+  font-size: 1.2rem;
+  opacity: 0.9;
+}
+
+
+.gridContainer {
+  padding: 3rem 5%;
+}
+
+.patientGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.logoImage{
+  height: 80px;
+  width: auto;
+}
+
+.emptyMessage {
+  text-align: center;
+  font-size: 1.2rem;
+  color: #6c757d;
+  margin-top: 3rem;
+}

@@ -1,0 +1,87 @@
+.featuresSection {
+  padding: 5rem 2rem;
+  background-color: #fff; 
+}
+
+.title {
+  font-size: 3rem;
+  font-weight: 700;
+  text-align: left;
+  margin-bottom: 4rem;
+  max-width: 1100px;
+  margin-left: auto;
+  margin-right: auto;
+  padding: 0 2rem;
+}
+
+.container {
+  max-width: 1100px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr; 
+  gap: 4rem; 
+  align-items: center;
+}
+
+.timeline {
+  position: relative; 
+  padding-left: 2rem; 
+}
+
+.timeline::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 10px; 
+  bottom: 10px; 
+  width: 3px;
+  background-color: #00bcd4; 
+  border-radius: 2px;
+}
+
+.featureItem {
+  position: relative; 
+  margin-bottom: 2.5rem; 
+}
+.featureItem:last-child {
+  margin-bottom: 0; 
+}
+
+.featureItem::before {
+  content: '';
+  position: absolute;
+  left: -2rem; 
+  top: 8px; 
+  transform: translateX(-50%); 
+  width: 16px;
+  height: 16px;
+  background-color: #00bcd4; 
+  border: 3px solid #fff; 
+  border-radius: 50%;
+  z-index: 1;
+}
+
+.featureTitle {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin: 0 0 0.5rem 0;
+}
+
+.featureText {
+  font-size: 1rem;
+  line-height: 1.6;
+  color: #555;
+  margin: 0;
+}
+
+.imageContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.smartwatchImage {
+  max-width: 100%;
+  height: auto;
+  border-radius: 12px;
+}
