@@ -22,9 +22,14 @@ The system continuously tracks vital signs, location, and movement, and automati
 ```
 Desenvolvimento/
   └── 3.Implementação/
-      ├── DSIM-COD/DSIM/                     # Web server and dashboard
-      │    ├── public/                       # Frontend: index.html, JS, CSS
-      │    └── server.js                     # Backend: Express server, WebSocket
+      ├── DSIM-COD/DSIM/                     # Aplicação Web (React + TS + Vite)               
+      │   ├── src/
+      │   │   ├── components/
+      │   │   ├── pages/
+      │   │   ├── Types/
+      │   │   └── main.tsx                     
+      │   ├── vite.config.ts
+      │   └── package.json                    
       │
       │
       └── DSIM-INO/                          # Arduino/ESP8266 firmware
@@ -136,7 +141,7 @@ With these steps completed, your DSIM system will be fully installed and configu
 
 ## 🧩 Technologies Used
 
-- **Languages**: C++ (Firmware), JavaScript (Backend/Frontend)
+- **Languages**: C++ (Firmware), JavaScript (Frontend) e Java (Backend)
 - **Frameworks**: Express.js, WebSocket
 - **Hardware**: ESP8266 microcontroller
 - **Cloud**: AWS IoT
