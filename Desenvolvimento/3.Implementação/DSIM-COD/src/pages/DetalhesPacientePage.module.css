@@ -123,3 +123,36 @@
   color: #007bff;
   margin-top: 1rem;
 }
+
+
+.containerVazio { 
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;  
+  min-height: 80vh; 
+  padding: 2rem;
+}
+
+.tituloVazio {
+  font-size: 2.5rem;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 1.5rem;
+}
+
+.linkVoltar {
+  display: inline-block;
+  padding: 0.75rem 1.5rem;
+  background-color: var(--dark-blue);
+  color: #fff;
+  font-weight: 500;
+  text-decoration: none;
+  border-radius: 6px;
+  transition: background-color 0.2s ease;
+}
+
+.linkVoltar:hover {
+  background-color: #0056b3; 
+}

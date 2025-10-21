@@ -12,7 +12,7 @@ import styles from './AddPatientPage.module.css';
 
 interface PatientFormData {
   nome: string;
-  idade: number;
+  dataNascimento: string;
   genero: string;
   relacionamento: string;
   telefone: string;
@@ -41,7 +41,7 @@ const AddPatientPage: React.FC<AddPatientPageProps> = ({ onAddPatient }) => {
 
   const initialFormData: PatientFormData = {
     nome: '',
-    idade: 0,
+    dataNascimento: '',
     genero: '',
     relacionamento: '',
     telefone: '',
@@ -49,7 +49,7 @@ const AddPatientPage: React.FC<AddPatientPageProps> = ({ onAddPatient }) => {
     contatoEmergencia: { nome: '', telefone: '', email: '', instagram: '' },
     informacaoMedica: {
       tipoSangue: '',
-      Deficiencia: 'Não',
+      Deficiencia: '',
       ProblemaEspecifico: [],
     },
     vitals: {
@@ -106,14 +106,13 @@ const AddPatientPage: React.FC<AddPatientPageProps> = ({ onAddPatient }) => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    // 3. ATUALIZAR O OBJETO ENVIADO
     const patientDataToSubmit: Omit<Pacientes, 'id'> = {
       nome: formData.nome,
       genero: formData.genero,
       telefone: formData.telefone,
       relacionamento: formData.relacionamento,
       imageUrl: formData.imageUrl,
-      idade: Number(formData.idade),
+      dataNascimento: formData.dataNascimento,
       contatoEmergencial: formData.contatoEmergencia,
       vitals: formData.vitals,
       informacaoMedica: {
@@ -140,7 +139,9 @@ const AddPatientPage: React.FC<AddPatientPageProps> = ({ onAddPatient }) => {
         <fieldset>
           <legend>Informações Pessoais</legend>
           <input name="nome" value={formData.nome} onChange={handleChange} placeholder="Nome Completo" required />
-          <input name="idade" type="number" value={formData.idade} onChange={handleChange} placeholder="Idade" required />
+          
+          <label htmlFor='dataNascimento'>Data de Nascimento do paciente:</label>
+          <input id="dataNascimento" name="dataNascimento" type="date" value={formData.dataNascimento} onChange={handleChange} required />
           <select name="genero" value={formData.genero} onChange={handleChange} required>
             <option value="">Selecione o Gênero</option><option value="Homem">Homem</option><option value="Mulher">Mulher</option>
           </select>

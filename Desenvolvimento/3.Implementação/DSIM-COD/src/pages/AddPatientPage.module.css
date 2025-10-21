@@ -31,7 +31,7 @@
 .form legend {
   padding: 0 0.5rem;
   font-weight: 600;
-  color: #007bff;
+  color: var(--dark-blue);
 }
 
 .form input, .form select, .form textarea {
@@ -83,7 +83,7 @@
 .submitButton {
   padding: 1rem;
   border: none;
-  background-color: #007bff;
+  background-color: var(--dark-blue);
   color: white;
   border-radius: 6px;
   font-size: 1.1rem;

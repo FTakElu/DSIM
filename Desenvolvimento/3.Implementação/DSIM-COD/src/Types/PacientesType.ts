@@ -10,7 +10,7 @@ export interface Pacientes {
   id: number;
   nome: string;
   imageUrl: string;
-  idade: number;
+  dataNascimento: string;
   genero: string;
   relacionamento: string;
   telefone: string;
