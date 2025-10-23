@@ -48,14 +48,14 @@ public class SecurityConfig {
                 .referrerPolicy(referrerPolicy -> referrerPolicy.policy(ReferrerPolicyHeaderWriter.ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN)))
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(authz -> authz
-                // Endpoints públicos
-                .requestMatchers("/api/health", "/websocket/**", "/websocket/info").permitAll()
+                // Endpoints públicos (ALB Health Check + monitoramento)
+                .requestMatchers("/status", "/api/health", "/websocket/**", "/websocket/info").permitAll()
                 // Endpoints administrativos (somente para admin)
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
                 // Endpoints de médicos e enfermeiros
-                .requestMatchers("/api/pacientes/**", "/api/mews/**").hasAnyRole("MEDICO", "ENFERMEIRO", "ADMIN")
+                .requestMatchers("/api/v1/pacientes/**", "/api/v1/mews/**").hasAnyRole("MEDICO", "ENFERMEIRO", "ADMIN")
                 // Endpoints de dados da pulseira (IoT)
-                .requestMatchers("/api/pulseira/**").hasAnyRole("DEVICE", "ADMIN")
+                .requestMatchers("/api/v1/pulseira/**").hasAnyRole("DEVICE", "ADMIN")
                 // Todos os outros endpoints requerem autenticação
                 .anyRequest().authenticated())
             .oauth2ResourceServer(oauth2 -> oauth2
