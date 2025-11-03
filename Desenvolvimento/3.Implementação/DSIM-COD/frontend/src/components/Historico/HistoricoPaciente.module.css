@@ -1,4 +1,3 @@
-/* src/components/HistoricoPaciente/HistoricoPaciente.module.css */
 .historicoContainer {
   width: 100%;
   margin-top: 2rem;
@@ -49,10 +48,9 @@
 
 .graficoWrapper {
   width: 100%;
-  font-size: 0.9rem; /* Os labels do gráfico ficam menores */
+  font-size: 0.9rem; 
 }
 
-/* --- Lista de Eventos --- */
 .listaEventos {
   list-style: none;
   padding: 0;

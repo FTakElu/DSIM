@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import styles from "./HistoricoPaciente.module.css";
-//  Bibliotec Recharts. Instalação: npm install recharts
+//  Bibliotec Recharts. 
+// Instalação: npm install recharts
 import {
   LineChart,
   Line,

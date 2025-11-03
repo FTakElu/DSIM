@@ -1,12 +1,15 @@
 
-import React from "react";
+
+import React, { useState, useEffect } from "react"; 
 import { Link } from "react-router-dom";
 import PatientCard from "../components/PatientCard/PatientCard";
-import { Pacientes } from "../Types/PacientesType";
+import { Pacientes } from "../Types/PacientesType"; 
 import styles from "./PainelListaPacientes.module.css";
-import logo from "../assets/logo-dsim.png"
+import logo from "../assets/logo-dsim.png"; 
+import api from '../service/api'; 
 
-/*
+
+ /*
   PainelListaPacientes.tsx: Página principal do painel de controle.
   Exibe a lista de todos os pacientes cadastrados em formato de cards.
   Esta página recebe a lista de pacientes do App.tsx e serve
@@ -25,11 +28,42 @@ const PatientListHeader = () => (
   </header>
 );
 
-interface PatientListPageProps {
-  patients: Pacientes[];
-}
+const PainelListaPacientes: React.FC = () => {
 
-const PatientListPage: React.FC<PatientListPageProps> = ({ patients }) => {
+  const [patients, setPatients] = useState<Pacientes[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchPacientes = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        const response = await api.get('/api/pacientes');
+
+        setPatients(response.data); 
+
+      } catch (e: any) {
+        console.error("Falha ao buscar pacientes:", e);
+        const errorMsg = e.response?.data?.message || e.message || "Não foi possível carregar os pacientes.";
+        setError(errorMsg);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPacientes(); 
+  }, []); 
+  
+  if (loading) {
+    return <div className={styles.message}>Carregando pacientes...</div>;
+  }
+
+  if (error) {
+    return <div className={styles.errorMessage}>{error}</div>;
+  }
+
   return (
     <div className={styles.page}>
       <PatientListHeader />
@@ -45,8 +79,8 @@ const PatientListPage: React.FC<PatientListPageProps> = ({ patients }) => {
           </p>
         ) : (
           <div className={styles.patientGrid}>
-            {patients.map((Pacientes) => (
-              <PatientCard key={Pacientes.id} patient={Pacientes} />
+            {patients.map((paciente) => (
+              <PatientCard key={paciente.id} patient={paciente} />
             ))}
           </div>
         )}
@@ -55,4 +89,4 @@ const PatientListPage: React.FC<PatientListPageProps> = ({ patients }) => {
   );
 };
 
-export default PatientListPage;
+export default PainelListaPacientes;

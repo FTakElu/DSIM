@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Pacientes, Vital } from '../Types/PacientesType'; 
 import styles from './AddPatientPage.module.css';
+import api from '../service/api'; 
 
 /*
   AddPatientPage.tsx: Página de formulário para o cadastro de novos pacientes.
@@ -24,42 +25,31 @@ interface PatientFormData {
     ProblemaEspecifico: string[];
   };
   vitals: {
-    oxegenio: Vital;
+    oxigenio: Vital;
     temperatura: Vital;
     batimentos: Vital;
   };
 }
 
-interface AddPatientPageProps {
-  onAddPatient: (patient: Omit<Pacientes, 'id'>) => void;
-}
-
 const specificProblemsOptions = ["Diabetes", "Hipertensão", "Asma", "Artrite", "Colesterol Alto"];
 
-const AddPatientPage: React.FC<AddPatientPageProps> = ({ onAddPatient }) => {
+const AddPatientPage: React.FC = () => {
   const navigate = useNavigate();
 
   const initialFormData: PatientFormData = {
-    nome: '',
-    dataNascimento: '',
-    genero: '',
-    relacionamento: '',
-    telefone: '',
-    imageUrl: '',
+    nome: '', dataNascimento: '', genero: '', relacionamento: '', telefone: '', imageUrl: '',
     contatoEmergencia: { nome: '', telefone: '', email: '', instagram: '' },
-    informacaoMedica: {
-      tipoSangue: '',
-      Deficiencia: '',
-      ProblemaEspecifico: [],
-    },
+    informacaoMedica: { tipoSangue: '', Deficiencia: '', ProblemaEspecifico: [] },
     vitals: {
-      oxegenio: { value: 98, status: 'stable' },
+      oxigenio: { value: 98, status: 'stable' },
       temperatura: { value: 36.5, status: 'stable' },
       batimentos: { value: 80, status: 'stable' },
     },
   };
   
   const [formData, setFormData] = useState<PatientFormData>(initialFormData);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -103,17 +93,20 @@ const AddPatientPage: React.FC<AddPatientPageProps> = ({ onAddPatient }) => {
   };
 
 
-  const handleSubmit = (e: React.FormEvent) => {
+ 
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoading(true);
+    setError(null);
 
-    const patientDataToSubmit: Omit<Pacientes, 'id'> = {
+    const patientDataToSubmit: Omit<Pacientes, 'id' | 'escoreMEWS' | 'statusMEWS'> = {
       nome: formData.nome,
       genero: formData.genero,
       telefone: formData.telefone,
       relacionamento: formData.relacionamento,
       imageUrl: formData.imageUrl,
       dataNascimento: formData.dataNascimento,
-      contatoEmergencial: formData.contatoEmergencia,
+      contatoEmergencia: formData.contatoEmergencia,
       vitals: formData.vitals,
       informacaoMedica: {
         tipoSangue: formData.informacaoMedica.tipoSangue,
@@ -122,15 +115,26 @@ const AddPatientPage: React.FC<AddPatientPageProps> = ({ onAddPatient }) => {
       },
     };
 
-    onAddPatient(patientDataToSubmit);
-    navigate('/pacientes');
+    try {
+   
+      await api.post('/api/pacientes', patientDataToSubmit);
+    
+      navigate('/pacientes');
+
+    } catch (e: any) {
+      console.error('Erro ao cadastrar paciente:', e);
+      setError(e.response?.data?.message || e.message || 'Falha ao conectar com o servidor.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div className={styles.page}>
       <h1 className={styles.title}>Cadastrar Novo Paciente</h1>
+      {error && <p style={{ color: 'red', textAlign: 'center' }}>{error}</p>}
+      
       <form onSubmit={handleSubmit} className={styles.form}>
-        {/* 4. ATUALIZAR OS 'name' DOS INPUTS */}
         <fieldset className={styles.photoFieldset}>
             {formData.imageUrl && <img src={formData.imageUrl} alt="Pré-visualização do perfil" className={styles.avatarPreview}/>}
             <label htmlFor="photo-upload" className={styles.uploadButton}>Escolher Foto</label>
@@ -159,9 +163,17 @@ const AddPatientPage: React.FC<AddPatientPageProps> = ({ onAddPatient }) => {
         </fieldset>
         <fieldset>
           <legend>Ficha Médica</legend>
-          <select name="informacaoMedica.tipoSangue" value={formData.informacaoMedica.tipoSangue} onChange={handleChange} required>
-            <option value="">Tipo Sanguíneo</option><option value="A+">A+</option><option value="A-">A-</option><option value="B+">B+</option><option value="B-">B-</option><option value="AB+">AB+</option><option value="AB-">AB-</option><option value="O+">O+</option><option value="O-">O-</option>
-          </select>
+           <select name="informacaoMedica.tipoSangue" value={formData.informacaoMedica.tipoSangue} onChange={handleChange} required>
+            <option value="">Tipo Sanguíneo</option>
+            <option value="A+">A+</option>
+            <option value="A-">A-</option>
+            <option value="B+">B+</option>
+            <option value="B-">B-</option>
+            <option value="AB+">AB+</option>
+            <option value="AB-">AB-</option>
+            <option value="O+">O+</option>
+            <option value="O-">O-</option>
+            </select>
           <input name="informacaoMedica.Deficiencia" value={formData.informacaoMedica.Deficiencia} onChange={handleChange} placeholder="Possui alguma deficiência?" />
           <div className={styles.checkboxGroup}>
             <span>Problemas Específicos (selecione um ou mais):</span>
@@ -175,7 +187,9 @@ const AddPatientPage: React.FC<AddPatientPageProps> = ({ onAddPatient }) => {
             </div>
           </div>
         </fieldset>
-        <button type="submit" className={styles.submitButton}>Cadastrar Paciente</button>
+        <button type="submit" className={styles.submitButton} disabled={loading}>
+          {loading ? 'Cadastrando...' : 'Cadastrar Paciente'}
+        </button>
       </form>
     </div>
   );

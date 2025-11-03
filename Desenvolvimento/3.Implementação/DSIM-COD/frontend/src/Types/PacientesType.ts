@@ -3,18 +3,18 @@ export type VitalStatus = 'stable' | 'warning' | 'danger';
 
 export interface Vital {
   value: number | string;
-  status: VitalStatus;
+  status: VitalStatus; 
 }
 
 export interface Pacientes {
-  id: number;
+  id: string; 
   nome: string;
   imageUrl: string;
   dataNascimento: string;
   genero: string;
   relacionamento: string;
   telefone: string;
-  contatoEmergencial: {
+  contatoEmergencia: {
     nome: string;
     telefone: string;
     email: string;
@@ -26,8 +26,9 @@ export interface Pacientes {
     ProblemaEspecifico: string;
   };
   vitals: {
-    oxegenio: Vital;
+    oxigenio: Vital;
     temperatura: Vital;
     batimentos: Vital;
   };
+
 }

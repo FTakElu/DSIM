@@ -1,0 +1,27 @@
+.page {
+  min-height: 100vh;
+  background: #f4f4f4;
+}
+
+.container {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 40px 20px;
+}
+
+.pageTitle {
+  color: #0292B7;
+  margin: 0 0 12px;
+  font-size: 28px;
+}
+
+.subtitle {
+  color: #5e6a7d;
+  margin-bottom: 20px;
+}
+
+.gridActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}

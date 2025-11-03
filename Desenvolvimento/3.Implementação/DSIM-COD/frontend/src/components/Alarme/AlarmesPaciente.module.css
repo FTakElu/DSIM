@@ -1,0 +1,126 @@
+.alarmesContainer {
+  background-color: #f8f9fa; 
+  padding: 2rem;
+  border-radius: 16px;
+  margin-top: 2.5rem; 
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+.titulo {
+  font-size: 2.5rem;
+  margin-top: 0;
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.listaAlarmes {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.alarmeItem {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  background-color: #fff;
+  padding: 1.5rem;
+  border-radius: 12px;
+  border: 1px solid #e0e0e0;
+}
+
+.icone {
+  font-size: 2.5rem;
+  color: var(--primary-color, #007bff);
+  flex-shrink: 0;
+  width: 50px;
+  text-align: center;
+}
+
+.info {
+  flex-grow: 1; 
+  display: flex;
+  flex-direction: column;
+}
+
+.info strong {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.detalhes {
+  font-size: 0.9rem;
+  color: #666;
+  margin-top: 4px;
+}
+
+.footerAcoes {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #e0e0e0;
+}
+
+.configButton {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  background-color: #007bff; 
+  color: #fff;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.configButton:hover {
+  background-color: #0056b3;
+}
+
+.toggleSwitch {
+  position: relative;
+  display: inline-block;
+  width: 60px;
+  height: 34px;
+  flex-shrink: 0;
+}
+
+.toggleSwitch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  transition: .4s;
+  border-radius: 34px;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 26px;
+  width: 26px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  transition: .4s;
+  border-radius: 50%;
+}
+
+input:checked + .slider {
+  background-color: #007bff;
+}
+
+input:checked + .slider:before {
+  transform: translateX(26px);
+}

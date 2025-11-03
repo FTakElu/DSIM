@@ -4,13 +4,34 @@
   min-height: 100vh;
 }
 
+
+
 .header {
-  padding: 1rem 5%;
+  display: flex; 
+  justify-content: space-between; 
+  align-items: center; 
+  padding: 1rem 10%; 
   border-bottom: 1px solid #e0e0e0;
+  background-color: #fff; 
 }
 
 .logoImage {
-  height: 35px;
+  height: 50px; 
+}
+
+.configButton {
+  padding: 1rem 1rem;
+  background-color: var(--dark-blue);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.7rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease-in-out;
+}
+
+.configButton:hover {
+  background-color: #0056b3; 
 }
 
 .container {
