@@ -15,11 +15,7 @@ const Header: React.FC = () => {
           <a href="#sobre">O que é?</a>
           <a href="#funcionalidades">Funcionalidades</a>
         </nav>
-<<<<<<< HEAD
         <Link to="/login" className={styles.ctaButton}>Entrar</Link>
-=======
-        <Link to="pacientes" className={styles.ctaButton}>Entrar</Link>
->>>>>>> 6cb3298850116a63aa43f5d8d8b2feabfc52c032
       </div>
     </header>
   );

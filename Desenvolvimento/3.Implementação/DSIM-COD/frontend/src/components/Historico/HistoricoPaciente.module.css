@@ -1,7 +1,3 @@
-<<<<<<< HEAD
-=======
-/* src/components/HistoricoPaciente/HistoricoPaciente.module.css */
->>>>>>> 6cb3298850116a63aa43f5d8d8b2feabfc52c032
 .historicoContainer {
   width: 100%;
   margin-top: 2rem;
@@ -52,16 +48,9 @@
 
 .graficoWrapper {
   width: 100%;
-<<<<<<< HEAD
   font-size: 0.9rem; 
 }
 
-=======
-  font-size: 0.9rem; /* Os labels do gráfico ficam menores */
-}
-
-/* --- Lista de Eventos --- */
->>>>>>> 6cb3298850116a63aa43f5d8d8b2feabfc52c032
 .listaEventos {
   list-style: none;
   padding: 0;
