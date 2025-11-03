@@ -1,0 +1,8 @@
+{
+  "java.configuration.updateBuildConfiguration": "automatic",
+  "java.project.sourcePaths": [
+    "Desenvolvimento/3.Implementação/backend/src/main/java"
+  ],
+  "java.project.outputPath": "Desenvolvimento/3.Implementação/backend/target/classes",
+  "files.encoding": "utf8"
+}

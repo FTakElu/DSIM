@@ -2,7 +2,10 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Pacientes, Vital } from '../Types/PacientesType'; 
 import styles from './AddPatientPage.module.css';
+<<<<<<< HEAD
 import api from '../service/api'; 
+=======
+>>>>>>> 6cb3298850116a63aa43f5d8d8b2feabfc52c032
 
 /*
   AddPatientPage.tsx: Página de formulário para o cadastro de novos pacientes.
@@ -25,12 +28,17 @@ interface PatientFormData {
     ProblemaEspecifico: string[];
   };
   vitals: {
+<<<<<<< HEAD
     oxigenio: Vital;
+=======
+    oxegenio: Vital;
+>>>>>>> 6cb3298850116a63aa43f5d8d8b2feabfc52c032
     temperatura: Vital;
     batimentos: Vital;
   };
 }
 
+<<<<<<< HEAD
 const specificProblemsOptions = ["Diabetes", "Hipertensão", "Asma", "Artrite", "Colesterol Alto"];
 
 const AddPatientPage: React.FC = () => {
@@ -42,14 +50,43 @@ const AddPatientPage: React.FC = () => {
     informacaoMedica: { tipoSangue: '', Deficiencia: '', ProblemaEspecifico: [] },
     vitals: {
       oxigenio: { value: 98, status: 'stable' },
+=======
+interface AddPatientPageProps {
+  onAddPatient: (patient: Omit<Pacientes, 'id'>) => void;
+}
+
+const specificProblemsOptions = ["Diabetes", "Hipertensão", "Asma", "Artrite", "Colesterol Alto"];
+
+const AddPatientPage: React.FC<AddPatientPageProps> = ({ onAddPatient }) => {
+  const navigate = useNavigate();
+
+  const initialFormData: PatientFormData = {
+    nome: '',
+    dataNascimento: '',
+    genero: '',
+    relacionamento: '',
+    telefone: '',
+    imageUrl: '',
+    contatoEmergencia: { nome: '', telefone: '', email: '', instagram: '' },
+    informacaoMedica: {
+      tipoSangue: '',
+      Deficiencia: '',
+      ProblemaEspecifico: [],
+    },
+    vitals: {
+      oxegenio: { value: 98, status: 'stable' },
+>>>>>>> 6cb3298850116a63aa43f5d8d8b2feabfc52c032
       temperatura: { value: 36.5, status: 'stable' },
       batimentos: { value: 80, status: 'stable' },
     },
   };
   
   const [formData, setFormData] = useState<PatientFormData>(initialFormData);
+<<<<<<< HEAD
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+=======
+>>>>>>> 6cb3298850116a63aa43f5d8d8b2feabfc52c032
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -93,6 +130,7 @@ const AddPatientPage: React.FC = () => {
   };
 
 
+<<<<<<< HEAD
  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -100,13 +138,23 @@ const AddPatientPage: React.FC = () => {
     setError(null);
 
     const patientDataToSubmit: Omit<Pacientes, 'id' | 'escoreMEWS' | 'statusMEWS'> = {
+=======
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    const patientDataToSubmit: Omit<Pacientes, 'id'> = {
+>>>>>>> 6cb3298850116a63aa43f5d8d8b2feabfc52c032
       nome: formData.nome,
       genero: formData.genero,
       telefone: formData.telefone,
       relacionamento: formData.relacionamento,
       imageUrl: formData.imageUrl,
       dataNascimento: formData.dataNascimento,
+<<<<<<< HEAD
       contatoEmergencia: formData.contatoEmergencia,
+=======
+      contatoEmergencial: formData.contatoEmergencia,
+>>>>>>> 6cb3298850116a63aa43f5d8d8b2feabfc52c032
       vitals: formData.vitals,
       informacaoMedica: {
         tipoSangue: formData.informacaoMedica.tipoSangue,
@@ -115,6 +163,7 @@ const AddPatientPage: React.FC = () => {
       },
     };
 
+<<<<<<< HEAD
     try {
    
       await api.post('/api/pacientes', patientDataToSubmit);
@@ -127,14 +176,23 @@ const AddPatientPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
+=======
+    onAddPatient(patientDataToSubmit);
+    navigate('/pacientes');
+>>>>>>> 6cb3298850116a63aa43f5d8d8b2feabfc52c032
   };
 
   return (
     <div className={styles.page}>
       <h1 className={styles.title}>Cadastrar Novo Paciente</h1>
+<<<<<<< HEAD
       {error && <p style={{ color: 'red', textAlign: 'center' }}>{error}</p>}
       
       <form onSubmit={handleSubmit} className={styles.form}>
+=======
+      <form onSubmit={handleSubmit} className={styles.form}>
+        {/* 4. ATUALIZAR OS 'name' DOS INPUTS */}
+>>>>>>> 6cb3298850116a63aa43f5d8d8b2feabfc52c032
         <fieldset className={styles.photoFieldset}>
             {formData.imageUrl && <img src={formData.imageUrl} alt="Pré-visualização do perfil" className={styles.avatarPreview}/>}
             <label htmlFor="photo-upload" className={styles.uploadButton}>Escolher Foto</label>
@@ -163,6 +221,7 @@ const AddPatientPage: React.FC = () => {
         </fieldset>
         <fieldset>
           <legend>Ficha Médica</legend>
+<<<<<<< HEAD
            <select name="informacaoMedica.tipoSangue" value={formData.informacaoMedica.tipoSangue} onChange={handleChange} required>
             <option value="">Tipo Sanguíneo</option>
             <option value="A+">A+</option>
@@ -174,6 +233,11 @@ const AddPatientPage: React.FC = () => {
             <option value="O+">O+</option>
             <option value="O-">O-</option>
             </select>
+=======
+          <select name="informacaoMedica.tipoSangue" value={formData.informacaoMedica.tipoSangue} onChange={handleChange} required>
+            <option value="">Tipo Sanguíneo</option><option value="A+">A+</option><option value="A-">A-</option><option value="B+">B+</option><option value="B-">B-</option><option value="AB+">AB+</option><option value="AB-">AB-</option><option value="O+">O+</option><option value="O-">O-</option>
+          </select>
+>>>>>>> 6cb3298850116a63aa43f5d8d8b2feabfc52c032
           <input name="informacaoMedica.Deficiencia" value={formData.informacaoMedica.Deficiencia} onChange={handleChange} placeholder="Possui alguma deficiência?" />
           <div className={styles.checkboxGroup}>
             <span>Problemas Específicos (selecione um ou mais):</span>
@@ -187,9 +251,13 @@ const AddPatientPage: React.FC = () => {
             </div>
           </div>
         </fieldset>
+<<<<<<< HEAD
         <button type="submit" className={styles.submitButton} disabled={loading}>
           {loading ? 'Cadastrando...' : 'Cadastrar Paciente'}
         </button>
+=======
+        <button type="submit" className={styles.submitButton}>Cadastrar Paciente</button>
+>>>>>>> 6cb3298850116a63aa43f5d8d8b2feabfc52c032
       </form>
     </div>
   );

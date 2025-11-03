@@ -1,0 +1,39 @@
+{
+  "properties": [
+    {
+      "name": "cognito.user-pool-id",
+      "type": "java.lang.String",
+      "description": "AWS Cognito User Pool ID"
+    },
+    {
+      "name": "cognito.user-pool-arn",
+      "type": "java.lang.String", 
+      "description": "AWS Cognito User Pool ARN"
+    },
+    {
+      "name": "cognito.region",
+      "type": "java.lang.String",
+      "description": "AWS Cognito Region"
+    },
+    {
+      "name": "cors.allowed-origins",
+      "type": "java.lang.String",
+      "description": "CORS allowed origins"
+    },
+    {
+      "name": "cors.allowed-methods", 
+      "type": "java.lang.String",
+      "description": "CORS allowed methods"
+    },
+    {
+      "name": "cors.allowed-headers",
+      "type": "java.lang.String", 
+      "description": "CORS allowed headers"
+    },
+    {
+      "name": "websocket.allowed-origins",
+      "type": "java.lang.String",
+      "description": "WebSocket allowed origins"
+    }
+  ]
+}

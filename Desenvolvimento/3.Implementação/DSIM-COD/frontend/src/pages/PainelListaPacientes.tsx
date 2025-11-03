@@ -1,4 +1,5 @@
 
+<<<<<<< HEAD
 
 import React, { useState, useEffect } from "react"; 
 import { Link } from "react-router-dom";
@@ -10,6 +11,16 @@ import api from '../service/api';
 
 
  /*
+=======
+import React from "react";
+import { Link } from "react-router-dom";
+import PatientCard from "../components/PatientCard/PatientCard";
+import { Pacientes } from "../Types/PacientesType";
+import styles from "./PainelListaPacientes.module.css";
+import logo from "../assets/logo-dsim.png"
+
+/*
+>>>>>>> 6cb3298850116a63aa43f5d8d8b2feabfc52c032
   PainelListaPacientes.tsx: Página principal do painel de controle.
   Exibe a lista de todos os pacientes cadastrados em formato de cards.
   Esta página recebe a lista de pacientes do App.tsx e serve
@@ -28,6 +39,7 @@ const PatientListHeader = () => (
   </header>
 );
 
+<<<<<<< HEAD
 const PainelListaPacientes: React.FC = () => {
 
   const [patients, setPatients] = useState<Pacientes[]>([]);
@@ -64,6 +76,13 @@ const PainelListaPacientes: React.FC = () => {
     return <div className={styles.errorMessage}>{error}</div>;
   }
 
+=======
+interface PatientListPageProps {
+  patients: Pacientes[];
+}
+
+const PatientListPage: React.FC<PatientListPageProps> = ({ patients }) => {
+>>>>>>> 6cb3298850116a63aa43f5d8d8b2feabfc52c032
   return (
     <div className={styles.page}>
       <PatientListHeader />
@@ -79,8 +98,13 @@ const PainelListaPacientes: React.FC = () => {
           </p>
         ) : (
           <div className={styles.patientGrid}>
+<<<<<<< HEAD
             {patients.map((paciente) => (
               <PatientCard key={paciente.id} patient={paciente} />
+=======
+            {patients.map((Pacientes) => (
+              <PatientCard key={Pacientes.id} patient={Pacientes} />
+>>>>>>> 6cb3298850116a63aa43f5d8d8b2feabfc52c032
             ))}
           </div>
         )}
@@ -89,4 +113,8 @@ const PainelListaPacientes: React.FC = () => {
   );
 };
 
+<<<<<<< HEAD
 export default PainelListaPacientes;
+=======
+export default PatientListPage;
+>>>>>>> 6cb3298850116a63aa43f5d8d8b2feabfc52c032

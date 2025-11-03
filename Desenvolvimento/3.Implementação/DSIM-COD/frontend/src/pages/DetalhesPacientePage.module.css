@@ -4,6 +4,7 @@
   min-height: 100vh;
 }
 
+<<<<<<< HEAD
 
 
 .header {
@@ -32,6 +33,15 @@
 
 .configButton:hover {
   background-color: #0056b3; 
+=======
+.header {
+  padding: 1rem 5%;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.logoImage {
+  height: 35px;
+>>>>>>> 6cb3298850116a63aa43f5d8d8b2feabfc52c032
 }
 
 .container {

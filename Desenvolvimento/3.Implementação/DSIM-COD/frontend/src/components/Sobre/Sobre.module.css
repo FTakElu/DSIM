@@ -33,8 +33,13 @@
 
 .cardImage {
   width: 100%;
+<<<<<<< HEAD
   height: 200px; 
   object-fit: cover;
+=======
+  height: 200px; /* Altura fixa para as imagens */
+  object-fit: cover; /* Garante que a imagem cubra a área sem distorcer */
+>>>>>>> 6cb3298850116a63aa43f5d8d8b2feabfc52c032
 }
 
 .cardTitle {
