@@ -1,0 +1,20 @@
+{
+  "name": "dsim-lambda-processor",
+  "version": "1.0.0",
+  "description": "Lambda function para processar dados dos sensores e enviar alertas",
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc",
+    "package": "npm run build && zip -r function.zip dist node_modules"
+  },
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.450.0",
+    "@aws-sdk/lib-dynamodb": "^3.450.0",
+    "@aws-sdk/client-apigatewaymanagementapi": "^3.450.0"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.126",
+    "@types/node": "^20.9.0",
+    "typescript": "^5.2.2"
+  }
+}

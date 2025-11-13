@@ -1,0 +1,220 @@
+import {
+    DeleteCommand,
+    GetCommand,
+    PutCommand,
+    ScanCommand,
+    UpdateCommand,
+} from '@aws-sdk/lib-dynamodb';
+import { Response, Router } from 'express';
+import { v4 as uuidv4 } from 'uuid';
+import { dynamoDB, TABLES } from '../config/aws';
+import { authMiddleware } from '../middleware/auth';
+import { AuthRequest, Patient } from '../types';
+
+const router = Router();
+
+// Todas as rotas de pacientes requerem autenticação
+router.use(authMiddleware);
+
+// Listar todos os pacientes
+router.get('/', async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const result = await dynamoDB.send(
+      new ScanCommand({
+        TableName: TABLES.PATIENTS,
+      })
+    );
+
+    const patients = result.Items || [];
+    res.json(patients);
+  } catch (error) {
+    console.error('Erro ao listar pacientes:', error);
+    res.status(500).json({ message: 'Erro ao listar pacientes' });
+  }
+});
+
+// Buscar paciente por ID
+router.get('/:id', async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+
+    const result = await dynamoDB.send(
+      new GetCommand({
+        TableName: TABLES.PATIENTS,
+        Key: { id },
+      })
+    );
+
+    if (!result.Item) {
+      res.status(404).json({ message: 'Paciente não encontrado' });
+      return;
+    }
+
+    res.json(result.Item);
+  } catch (error) {
+    console.error('Erro ao buscar paciente:', error);
+    res.status(500).json({ message: 'Erro ao buscar paciente' });
+  }
+});
+
+// Criar novo paciente
+router.post('/', async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const patientData = req.body;
+
+    const newPatient: Patient = {
+      id: uuidv4(),
+      ...patientData,
+      vitals: patientData.vitals || {
+        oxigenio: { value: 98, status: 'stable' },
+        temperatura: { value: 36.5, status: 'stable' },
+        batimentos: { value: 80, status: 'stable' },
+      },
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    };
+
+    await dynamoDB.send(
+      new PutCommand({
+        TableName: TABLES.PATIENTS,
+        Item: newPatient,
+      })
+    );
+
+    res.status(201).json(newPatient);
+  } catch (error) {
+    console.error('Erro ao criar paciente:', error);
+    res.status(500).json({ message: 'Erro ao criar paciente' });
+  }
+});
+
+// Atualizar paciente
+router.put('/:id', async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const updates = req.body;
+
+    // Verificar se paciente existe
+    const existing = await dynamoDB.send(
+      new GetCommand({
+        TableName: TABLES.PATIENTS,
+        Key: { id },
+      })
+    );
+
+    if (!existing.Item) {
+      res.status(404).json({ message: 'Paciente não encontrado' });
+      return;
+    }
+
+    // Construir expressão de atualização
+    const updateExpressions: string[] = [];
+    const expressionAttributeNames: Record<string, string> = {};
+    const expressionAttributeValues: Record<string, any> = {};
+
+    Object.keys(updates).forEach((key, index) => {
+      if (key !== 'id') {
+        updateExpressions.push(`#field${index} = :value${index}`);
+        expressionAttributeNames[`#field${index}`] = key;
+        expressionAttributeValues[`:value${index}`] = updates[key];
+      }
+    });
+
+    updateExpressions.push(`#updatedAt = :updatedAt`);
+    expressionAttributeNames['#updatedAt'] = 'updatedAt';
+    expressionAttributeValues[':updatedAt'] = Date.now();
+
+    await dynamoDB.send(
+      new UpdateCommand({
+        TableName: TABLES.PATIENTS,
+        Key: { id },
+        UpdateExpression: `SET ${updateExpressions.join(', ')}`,
+        ExpressionAttributeNames: expressionAttributeNames,
+        ExpressionAttributeValues: expressionAttributeValues,
+      })
+    );
+
+    // Buscar paciente atualizado
+    const updated = await dynamoDB.send(
+      new GetCommand({
+        TableName: TABLES.PATIENTS,
+        Key: { id },
+      })
+    );
+
+    res.json(updated.Item);
+  } catch (error) {
+    console.error('Erro ao atualizar paciente:', error);
+    res.status(500).json({ message: 'Erro ao atualizar paciente' });
+  }
+});
+
+// Deletar paciente
+router.delete(
+  '/:id',
+  async (req: AuthRequest, res: Response): Promise<void> => {
+    try {
+      const { id } = req.params;
+
+      // Verificar se paciente existe
+      const existing = await dynamoDB.send(
+        new GetCommand({
+          TableName: TABLES.PATIENTS,
+          Key: { id },
+        })
+      );
+
+      if (!existing.Item) {
+        res.status(404).json({ message: 'Paciente não encontrado' });
+        return;
+      }
+
+      await dynamoDB.send(
+        new DeleteCommand({
+          TableName: TABLES.PATIENTS,
+          Key: { id },
+        })
+      );
+
+      res.json({ message: 'Paciente deletado com sucesso' });
+    } catch (error) {
+      console.error('Erro ao deletar paciente:', error);
+      res.status(500).json({ message: 'Erro ao deletar paciente' });
+    }
+  }
+);
+
+// Vincular dispositivo ao paciente
+router.post(
+  '/:id/device',
+  async (req: AuthRequest, res: Response): Promise<void> => {
+    try {
+      const { id } = req.params;
+      const { deviceId } = req.body;
+
+      if (!deviceId) {
+        res.status(400).json({ message: 'deviceId é obrigatório' });
+        return;
+      }
+
+      await dynamoDB.send(
+        new UpdateCommand({
+          TableName: TABLES.PATIENTS,
+          Key: { id },
+          UpdateExpression: 'SET deviceId = :deviceId, updatedAt = :updatedAt',
+          ExpressionAttributeValues: {
+            ':deviceId': deviceId,
+            ':updatedAt': Date.now(),
+          },
+        })
+      );
+
+      res.json({ message: 'Dispositivo vinculado com sucesso' });
+    } catch (error) {
+      console.error('Erro ao vincular dispositivo:', error);
+      res.status(500).json({ message: 'Erro ao vincular dispositivo' });
+    }
+  }
+);
+
+export default router;

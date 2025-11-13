@@ -9,11 +9,11 @@ const char WIFI_SSID[] = "Nemtenta";        // SEU SSID (do seu WiFi)
 const char WIFI_PASSWORD[] = "Toyo938912";  // SUA SENHA (do seu WiFi)
 
 // --- 2. Configurações AWS IoT Core ---
-const char THINGNAME[] = "DSIM_ESP8266_IoT"; // Seu Thing Name / Client ID
-const char MQTT_HOST[] = "a2cs805qynf1nj-ats.iot.us-east-1.amazonaws.com"; // Seu Endpoint AWS IoT
+const char THINGNAME[] = "Pulseira_DSIM";    // Thing Name já criado no IoT Core
+const char MQTT_HOST[] = "a2cs805qynf1nj-ats.iot.us-east-1.amazonaws.com"; // Endpoint AWS IoT
 
-const char AWS_IOT_PUBLISH_TOPIC[] = "DSIM_ESP8266_IoT/pub";
-const char AWS_IOT_SUBSCRIBE_TOPIC[] = "DSIM_ESP8266_IoT/sub";
+const char AWS_IOT_PUBLISH_TOPIC[] = "pulseira/dados";  // Tópico usado pela regra DadosPulseiraToDynamoDB
+const char AWS_IOT_SUBSCRIBE_TOPIC[] = "pulseira/comandos";
 
 // --- 3. Pinos do Hardware para ESP8266-01 ---
 const int buttonPin = 0;      // Pino digital para o botão de Pânico (GPIO0 no ESP8266-01)
@@ -24,6 +24,10 @@ bool panicMode = false;       // Estado atual do modo pânico (true = ativado, f
 int lastButtonState = HIGH;   // Último estado lido do botão (HIGH = não pressionado, LOW = pressionado)
 unsigned long lastDebounceTime = 0; // Tempo do último acionamento do debounce
 const int debounceDelay = 50; // Atraso para debounce em milissegundos
+
+// Variáveis para envio periódico de dados
+unsigned long lastPublishTime = 0;
+const unsigned long publishInterval = 10000; // Enviar dados a cada 10 segundos
 
 // --- 5. Configuração de Tempo para TLS/SSL ---
 const int8_t TIME_ZONE = -3; // Fuso horário
@@ -179,12 +183,20 @@ void connectAWS() {
 }
 
 void publishPanicStatus() {
-  StaticJsonDocument<200> doc; // <--- CORRIGIDO: Adicionado o tamanho do buffer (200 bytes)
-  doc["device_id"] = THINGNAME;
-  doc["timestamp"] = String(time(nullptr));
-  doc["panic_status"] = panicMode;
+  StaticJsonDocument<256> doc;
+  
+  // Formato compatível com DSIM_SensorData
+  doc["deviceId"] = THINGNAME;  // ⚠️ "deviceId" (não "device_id")
+  
+  // Simulação de sensores (substitua por leituras reais)
+  doc["batimentos"] = random(60, 120);      // BPM entre 60-120
+  doc["oxigenio"] = random(92, 100);        // SpO2 entre 92-100%
+  doc["temperatura"] = 35.5 + random(0, 200) / 100.0;  // Temperatura 35.5-37.5°C
+  
+  // Status de pânico
+  doc["panico_ativo"] = panicMode;
 
-  char jsonBuffer[200];
+  char jsonBuffer[256];
   serializeJson(doc, jsonBuffer);
 
   Serial.print("Publicando no topico [");
@@ -196,6 +208,33 @@ void publishPanicStatus() {
     Serial.println("Mensagem publicada com sucesso!");
   } else {
     Serial.println("Falha ao publicar mensagem.");
+  }
+}
+
+void publishSensorData() {
+  StaticJsonDocument<256> doc;
+  
+  // Formato compatível com DSIM_SensorData
+  doc["deviceId"] = THINGNAME;
+  
+  // Simulação de sensores (SUBSTITUA POR LEITURAS REAIS DOS SENSORES)
+  doc["batimentos"] = random(60, 120);      // BPM - Substitua por MAX30102
+  doc["oxigenio"] = random(92, 100);        // SpO2 - Substitua por MAX30102
+  doc["temperatura"] = 35.5 + random(0, 200) / 100.0;  // °C - Substitua por MLX90614/DS18B20
+  doc["panico_ativo"] = panicMode;
+
+  char jsonBuffer[256];
+  serializeJson(doc, jsonBuffer);
+
+  Serial.print("📊 Dados dos sensores [");
+  Serial.print(AWS_IOT_PUBLISH_TOPIC);
+  Serial.print("]: ");
+  Serial.println(jsonBuffer);
+
+  if (client.publish(AWS_IOT_PUBLISH_TOPIC, jsonBuffer)) {
+    Serial.println("✅ Dados enviados com sucesso!");
+  } else {
+    Serial.println("❌ Falha ao enviar dados.");
   }
 }
 
@@ -222,6 +261,13 @@ void loop() {
   }
   client.loop(); // Processa mensagens MQTT pendentes e mantém o keep-alive
 
+  // --- ENVIO PERIÓDICO DE DADOS DOS SENSORES (A CADA 10 SEGUNDOS) ---
+  unsigned long currentTime = millis();
+  if (currentTime - lastPublishTime >= publishInterval) {
+    publishSensorData();  // Envia dados dos sensores
+    lastPublishTime = currentTime;
+  }
+
   // --- LEITURA E DEBOUNCE DO BOTÃO (LÓGICA QUE VOCÊ DISSE QUE FUNCIONAVA) ---
   int currentButtonState = digitalRead(buttonPin);
 
@@ -230,12 +276,12 @@ void loop() {
     panicMode = !panicMode;        // Alterna o modo (se estava false, vira true; se estava true, vira false)
     lastDebounceTime = millis();   // Atualiza o tempo do último "clique" para o debounce
 
-    Serial.print("Modo pânico alternado para: ");
+    Serial.print("🚨 Modo pânico alternado para: ");
     Serial.println(panicMode ? "ATIVO" : "DESATIVADO");
 
-    // Publica o status do pânico no AWS IoT (agora integrado)
+    // Publica o status do pânico no AWS IoT (imediatamente quando muda)
     if (client.connected()) {
-      publishPanicStatus(); // Chama a função que cria o JSON e publica
+      publishPanicStatus(); // Publica status de pânico
     } else {
       Serial.println("Erro: Não conectado ao AWS IoT para publicar mensagem.");
     }
@@ -248,7 +294,4 @@ void loop() {
   } else {
     noTone(buzzerPin);     // Buzzer desligado
   }
-
-  // Não é necessário um delay fixo aqui, pois o debounce já controla a frequência de leitura do botão.
-  // Removi as linhas de debug extra do final do loop para não encher o serial.
 }
