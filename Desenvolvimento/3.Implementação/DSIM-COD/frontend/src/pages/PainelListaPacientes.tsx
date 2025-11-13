@@ -36,6 +36,36 @@ const PainelListaPacientes: React.FC = () => {
 
   useEffect(() => {
     fetchPacientes(); 
+
+    // WebSocket para atualização em tempo real
+    const ws = new WebSocket('ws://localhost:9999');
+    
+    ws.onopen = () => {
+      console.log('WebSocket conectado ao painel de pacientes');
+    };
+
+    ws.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      console.log('Dados recebidos via WebSocket:', data);
+      
+      // Atualiza a lista de pacientes quando receber novos dados
+      if (data.type === 'vital-update' || data.type === 'patient-update') {
+        fetchPacientes();
+      }
+    };
+
+    ws.onerror = (error) => {
+      console.error('Erro no WebSocket:', error);
+    };
+
+    ws.onclose = () => {
+      console.log('WebSocket desconectado');
+    };
+
+    // Cleanup: fecha o WebSocket ao desmontar o componente
+    return () => {
+      ws.close();
+    };
   }, []); 
 
   const fetchPacientes = async () => {
