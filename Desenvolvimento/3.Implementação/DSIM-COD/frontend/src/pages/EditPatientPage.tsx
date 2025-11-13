@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import api from '../service/api';
 import { Pacientes, Vital } from '../Types/PacientesType';
-import styles from './AddPatientPage.module.css';
+import styles from './AddPatientPage.module.css'; // Reusa os mesmos estilos
 
 interface PatientFormData {
   nome: string;
@@ -16,12 +16,12 @@ interface PatientFormData {
     nome: string; 
     telefone: string; 
     email: string; 
-    parentesco: string; // ⚠️ Mudado de instagram
+    parentesco: string;
   };
   informacaoMedica: {
     tipoSangue: string;
-    possuiDeficiencia: string; // ⚠️ "Sim" ou "Não"
-    qualDeficiencia: string; // ⚠️ Especifica qual (se Sim)
+    possuiDeficiencia: string;
+    qualDeficiencia: string;
     ProblemaEspecifico: string[];
   };
   vitals: {
@@ -34,8 +34,9 @@ interface PatientFormData {
 const specificProblemsOptions = ["Diabetes", "Hipertensão", "Asma", "Artrite", "Colesterol Alto"];
 const parentescoOptions = ["Pai", "Mãe", "Filho(a)", "Cônjuge", "Irmão(ã)", "Avô(ó)", "Tio(a)", "Primo(a)", "Amigo(a)", "Outro"];
 
-const AddPatientPage: React.FC = () => {
+const EditPatientPage: React.FC = () => {
   const navigate = useNavigate();
+  const { id } = useParams<{ id: string }>();
   
   const initialFormData: PatientFormData = {
     nome: '', dataNascimento: '', genero: '', relacionamento: '', telefone: '', imageUrl: '', deviceId: '',
@@ -53,12 +54,60 @@ const AddPatientPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Buscar pulseiras disponíveis
+  // Buscar dados do paciente
+  useEffect(() => {
+    const fetchPatient = async () => {
+      try {
+        setLoading(true);
+        const response = await api.get(`/api/pacientes/${id}`);
+        const patient: Pacientes = response.data;
+        
+        // Preencher o formulário com os dados existentes
+        setFormData({
+          nome: patient.nome || '',
+          dataNascimento: patient.dataNascimento || '',
+          genero: patient.genero || '',
+          relacionamento: patient.relacionamento || '',
+          telefone: patient.telefone || '',
+          imageUrl: patient.imageUrl || '',
+          deviceId: patient.deviceId || '',
+          contatoEmergencia: {
+            nome: patient.contatoEmergencia?.nome || '',
+            telefone: patient.contatoEmergencia?.telefone || '',
+            email: patient.contatoEmergencia?.email || '',
+            parentesco: patient.contatoEmergencia?.parentesco || '',
+          },
+          informacaoMedica: {
+            tipoSangue: patient.informacaoMedica?.tipoSangue || '',
+            possuiDeficiencia: patient.informacaoMedica?.possuiDeficiencia || 'Não',
+            qualDeficiencia: patient.informacaoMedica?.qualDeficiencia || '',
+            ProblemaEspecifico: typeof patient.informacaoMedica?.ProblemaEspecifico === 'string' 
+              ? patient.informacaoMedica.ProblemaEspecifico.split(',').map(s => s.trim())
+              : (patient.informacaoMedica?.ProblemaEspecifico || []),
+          },
+          vitals: patient.vitals || {
+            oxigenio: { value: 98, status: 'stable' },
+            temperatura: { value: 36.5, status: 'stable' },
+            batimentos: { value: 80, status: 'stable' },
+          },
+        });
+      } catch (e: any) {
+        console.error('Erro ao buscar paciente:', e);
+        setError(e.response?.data?.message || 'Erro ao carregar dados do paciente');
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    if (id) fetchPatient();
+  }, [id]);
+
+  // Buscar dispositivos disponíveis
   useEffect(() => {
     const fetchDevices = async () => {
       try {
         const response = await api.get('/api/pacientes/devices/available');
-        // Usar todos os dispositivos (não apenas os disponíveis) para permitir reatribuição
+        // Usar todos os dispositivos para permitir reatribuição
         setAvailableDevices(response.data.all || ['Pulseira_DSIM', 'Pulseira_02', 'Pulseira_03']);
       } catch (e) {
         console.error('Erro ao buscar dispositivos:', e);
@@ -91,11 +140,14 @@ const AddPatientPage: React.FC = () => {
   const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { value, checked } = e.target;
     setFormData(prev => {
-      const currentProblems = prev.informacaoMedica.ProblemaEspecifico;
-      const newProblems = checked
-        ? [...currentProblems, value]
-        : currentProblems.filter(p => p !== value);
-      return { ...prev, informacaoMedica: { ...prev.informacaoMedica, ProblemaEspecifico: newProblems } };
+      const current = prev.informacaoMedica.ProblemaEspecifico;
+      return {
+        ...prev,
+        informacaoMedica: {
+          ...prev.informacaoMedica,
+          ProblemaEspecifico: checked ? [...current, value] : current.filter(p => p !== value),
+        },
+      };
     });
   };
 
@@ -110,58 +162,71 @@ const AddPatientPage: React.FC = () => {
     }
   };
 
-
- 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
     setError(null);
 
-    const patientDataToSubmit: Omit<Pacientes, 'id' | 'escoreMEWS' | 'statusMEWS'> = {
-      nome: formData.nome,
-      genero: formData.genero,
-      telefone: formData.telefone,
-      relacionamento: formData.relacionamento,
-      imageUrl: formData.imageUrl,
-      dataNascimento: formData.dataNascimento,
-      deviceId: formData.deviceId,
-      contatoEmergencia: formData.contatoEmergencia,
-      vitals: formData.vitals,
-      informacaoMedica: {
-        tipoSangue: formData.informacaoMedica.tipoSangue,
-        possuiDeficiencia: formData.informacaoMedica.possuiDeficiencia,
-        qualDeficiencia: formData.informacaoMedica.qualDeficiencia,
-        ProblemaEspecifico: formData.informacaoMedica.ProblemaEspecifico.join(', ') || 'Nenhum',
-      },
-    };
-
     try {
-   
-      await api.post('/api/pacientes', patientDataToSubmit);
-    
-      navigate('/pacientes');
+      setLoading(true);
+      
+      const patientDataToSubmit: Partial<Pacientes> = {
+        nome: formData.nome,
+        dataNascimento: formData.dataNascimento,
+        genero: formData.genero,
+        relacionamento: formData.relacionamento,
+        telefone: formData.telefone,
+        imageUrl: formData.imageUrl,
+        deviceId: formData.deviceId,
+        contatoEmergencia: {
+          nome: formData.contatoEmergencia.nome,
+          telefone: formData.contatoEmergencia.telefone,
+          email: formData.contatoEmergencia.email,
+          parentesco: formData.contatoEmergencia.parentesco,
+        },
+        informacaoMedica: {
+          tipoSangue: formData.informacaoMedica.tipoSangue,
+          possuiDeficiencia: formData.informacaoMedica.possuiDeficiencia,
+          qualDeficiencia: formData.informacaoMedica.qualDeficiencia,
+          ProblemaEspecifico: formData.informacaoMedica.ProblemaEspecifico.join(', '),
+        },
+        vitals: formData.vitals,
+      };
 
-    } catch (e: any) {
-      console.error('Erro ao cadastrar paciente:', e);
-      setError(e.response?.data?.message || e.message || 'Falha ao conectar com o servidor.');
+      await api.put(`/api/pacientes/${id}`, patientDataToSubmit);
+      alert('Paciente atualizado com sucesso!');
+      navigate('/pacientes');
+    } catch (err: any) {
+      console.error('Erro ao atualizar paciente:', err);
+      setError(err.response?.data?.message || 'Falha ao atualizar paciente');
     } finally {
       setLoading(false);
     }
   };
 
+  if (loading && !formData.nome) {
+    return <div className={styles.loading}>Carregando dados do paciente...</div>;
+  }
+
   return (
-    <div className={styles.page}>
-      <h1 className={styles.title}>Cadastrar Novo Paciente</h1>
-      {error && <p style={{ color: 'red', textAlign: 'center' }}>{error}</p>}
-      
+    <div className={styles.pageContainer}>
+      <header className={styles.header}>
+        <h1>Editar Paciente</h1>
+        <button type="button" onClick={() => navigate('/pacientes')} className={styles.cancelButton}>
+          Voltar
+        </button>
+      </header>
+
+      {error && <div className={styles.errorMessage}>{error}</div>}
+
       <form onSubmit={handleSubmit} className={styles.form}>
         <fieldset className={styles.photoFieldset}>
-            {formData.imageUrl && <img src={formData.imageUrl} alt="Pré-visualização do perfil" className={styles.avatarPreview}/>}
-            <label htmlFor="photo-upload" className={styles.uploadButton}>Escolher Foto</label>
-            <input id="photo-upload" type="file" accept="image/*" onChange={handleImageChange} style={{display: 'none'}}/>
+          {formData.imageUrl && <img src={formData.imageUrl} alt="Foto do paciente" className={styles.avatarPreview}/>}
+          <label htmlFor="photo-upload" className={styles.uploadButton}>Alterar Foto</label>
+          <input id="photo-upload" type="file" accept="image/*" onChange={handleImageChange} style={{display: 'none'}}/>
         </fieldset>
+
         <fieldset>
-          <legend>Informações Pessoais</legend>
+          <legend>Dados Pessoais</legend>
           
           <label htmlFor='nome'>Nome Completo:</label>
           <input id="nome" name="nome" value={formData.nome} onChange={handleChange} placeholder="Nome Completo" required />
@@ -169,14 +234,14 @@ const AddPatientPage: React.FC = () => {
           <label htmlFor='dataNascimento'>Data de Nascimento:</label>
           <input id="dataNascimento" name="dataNascimento" type="date" value={formData.dataNascimento} onChange={handleChange} required />
           
-          <label htmlFor='genero'>Gênero:</label>
+          <label htmlFor="genero">Gênero:</label>
           <select id="genero" name="genero" value={formData.genero} onChange={handleChange} required>
-            <option value="">Selecione o Gênero</option>
+            <option value="">Selecione o gênero</option>
             <option value="Homem">Homem</option>
             <option value="Mulher">Mulher</option>
           </select>
           
-          <label htmlFor='relacionamento'>Estado Civil:</label>
+          <label htmlFor="relacionamento">Estado Civil:</label>
           <select id="relacionamento" name="relacionamento" value={formData.relacionamento} onChange={handleChange} required>
             <option value="" disabled>Estado Civil</option>
             <option value="Solteiro(a)">Solteiro(a)</option>
@@ -195,7 +260,7 @@ const AddPatientPage: React.FC = () => {
             name="deviceId" 
             value={formData.deviceId} 
             onChange={handleChange} 
-            required 
+            required
             style={{borderColor: '#2563eb', borderWidth: '2px'}}
           >
             <option value="">Selecione uma pulseira</option>
@@ -205,6 +270,7 @@ const AddPatientPage: React.FC = () => {
           </select>
           <small style={{color: '#6b7280', fontSize: '0.875rem'}}>⚠️ Este ID deve corresponder ao deviceId da pulseira física</small>
         </fieldset>
+
         <fieldset>
           <legend>Contato de Emergência</legend>
           
@@ -231,12 +297,13 @@ const AddPatientPage: React.FC = () => {
             ))}
           </select>
         </fieldset>
+
         <fieldset>
-          <legend>Ficha Médica</legend>
+          <legend>Informação Médica</legend>
           
           <label htmlFor='tipoSangue'>Tipo Sanguíneo:</label>
-           <select id="tipoSangue" name="informacaoMedica.tipoSangue" value={formData.informacaoMedica.tipoSangue} onChange={handleChange} required>
-            <option value="">Tipo Sanguíneo</option>
+          <select id="tipoSangue" name="informacaoMedica.tipoSangue" value={formData.informacaoMedica.tipoSangue} onChange={handleChange} required>
+            <option value="">Selecione o tipo</option>
             <option value="A+">A+</option>
             <option value="A-">A-</option>
             <option value="B+">B+</option>
@@ -245,7 +312,9 @@ const AddPatientPage: React.FC = () => {
             <option value="AB-">AB-</option>
             <option value="O+">O+</option>
             <option value="O-">O-</option>
-            </select>          <label htmlFor='possuiDeficiencia'>Possui alguma deficiência?</label>
+          </select>
+          
+          <label htmlFor='possuiDeficiencia'>Possui alguma deficiência?</label>
           <select 
             id="possuiDeficiencia" 
             name="informacaoMedica.possuiDeficiencia" 
@@ -272,17 +341,23 @@ const AddPatientPage: React.FC = () => {
             <div className={styles.checkboxOptions}>
               {specificProblemsOptions.map(problem => (
                 <div key={problem} className={styles.checkboxItem}>
-                  <input type="checkbox" id={problem} value={problem} onChange={handleCheckboxChange} />
-                  <label htmlFor={problem}>{problem}</label>
+                  <input 
+                    type="checkbox" 
+                    id={`problem-${problem}`} 
+                    value={problem} 
+                    checked={formData.informacaoMedica.ProblemaEspecifico.includes(problem)}
+                    onChange={handleCheckboxChange}
+                  />
+                  <label htmlFor={`problem-${problem}`}>{problem}</label>
                 </div>
               ))}
             </div>
           </div>
         </fieldset>
-        
+
         <div className={styles.buttonGroup}>
           <button type="submit" className={styles.submitButton} disabled={loading}>
-            {loading ? 'Cadastrando...' : 'Cadastrar Paciente'}
+            {loading ? 'Salvando...' : 'Atualizar Paciente'}
           </button>
           <button type="button" onClick={() => navigate('/pacientes')} className={styles.cancelButton}>
             Cancelar
@@ -293,4 +368,4 @@ const AddPatientPage: React.FC = () => {
   );
 };
 
-export default AddPatientPage;
+export default EditPatientPage;

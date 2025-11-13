@@ -1,14 +1,14 @@
 
-import React, { useState, useEffect } from 'react'; 
-import { useParams, Link } from 'react-router-dom';
-import { Pacientes } from '../Types/PacientesType'; 
-import styles from './DetalhesPacientePage.module.css';
+import React, { useEffect, useState } from 'react';
+import { FaArrowLeft, FaHeartbeat, FaThermometerHalf, FaTint } from 'react-icons/fa';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import logoImage from '../assets/logo-dsim.png';
-import { FaTint, FaThermometerHalf, FaHeartbeat } from 'react-icons/fa';
-import HistoricoPaciente from '../components/Historico/HistoricoPaciente';
-import api from '../service/api'; 
-import { AlarmeConfig } from '../service/mockData';
 import AlarmesPaciente from '../components/Alarme/AlarmesPaciente';
+import HistoricoPaciente from '../components/Historico/HistoricoPaciente';
+import api from '../service/api';
+import { AlarmeConfig } from '../service/mockData';
+import { Pacientes } from '../Types/PacientesType';
+import styles from './DetalhesPacientePage.module.css';
 
 /*
   DetalhesPacientePage.tsx: Página de visualização detalhada de um único paciente.
@@ -35,20 +35,28 @@ function calIdade(dataNascimento: string): number {
 }
 
 interface DetailHeaderProps { pacienteId: string; }
-const DetailHeader: React.FC<DetailHeaderProps> = ({ pacienteId }) => (
-  <header className={styles.header}>
-    <Link to="/pacientes">
-      <img src={logoImage} alt="DSIM Logo" className={styles.logoImage} />
-    </Link>
-    <Link 
-      to={`/pacientes/${pacienteId}/configurar-alarme`} 
-      className={styles.configButton}
-    >
-      Configurar Alarme
-    </Link>
-    
-  </header>
-);
+const DetailHeader: React.FC<DetailHeaderProps> = ({ pacienteId }) => {
+  const navigate = useNavigate();
+  
+  return (
+    <header className={styles.header}>
+      <div className={styles.headerLeft}>
+        <button onClick={() => navigate('/pacientes')} className={styles.backButton}>
+          <FaArrowLeft /> Voltar
+        </button>
+        <Link to="/pacientes">
+          <img src={logoImage} alt="DSIM Logo" className={styles.logoImage} />
+        </Link>
+      </div>
+      <Link 
+        to={`/pacientes/${pacienteId}/configurar-alarme`} 
+        className={styles.configButton}
+      >
+        Configurar Alarme
+      </Link>
+    </header>
+  );
+};
 
 const DetalhesPacientePage: React.FC = () => { 
   const { pacienteId } = useParams<{ pacienteId: string }>();
@@ -122,7 +130,7 @@ const DetalhesPacientePage: React.FC = () => {
                <strong>Contato emergência</strong>
                <p>Celular: {paciente.contatoEmergencia?.telefone || 'N/A'}</p> 
                <p>Gmail: {paciente.contatoEmergencia?.email || 'N/A'}</p>
-               <p>Instagram: {paciente.contatoEmergencia?.instagram || 'N/A'}</p>
+               <p>Parentesco: {paciente.contatoEmergencia?.parentesco || 'N/A'}</p>
              </div>
            </div>
            <div className={styles.personalDetails}>
@@ -136,7 +144,10 @@ const DetalhesPacientePage: React.FC = () => {
            <div className={styles.medicalInfo}>
              <strong style={{ color: "var(--dark-blue)" }}>Ficha médica</strong>
              <p><strong>Sangue:</strong> {paciente.informacaoMedica?.tipoSangue || 'N/A'}</p>
-             <p><strong>Deficiência:</strong> {paciente.informacaoMedica?.Deficiencia || 'N/A'}</p>
+             <p><strong>Possui Deficiência:</strong> {paciente.informacaoMedica?.possuiDeficiencia || 'N/A'}</p>
+             {paciente.informacaoMedica?.possuiDeficiencia === 'Sim' && paciente.informacaoMedica?.qualDeficiencia && (
+               <p><strong>Qual Deficiência:</strong> {paciente.informacaoMedica.qualDeficiencia}</p>
+             )}
              <p><strong>Problemas:</strong> {paciente.informacaoMedica?.ProblemaEspecifico || 'N/A'}</p>
            </div>
         </section>

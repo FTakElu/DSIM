@@ -57,6 +57,38 @@ router.get('/:id', async (req: AuthRequest, res: Response): Promise<void> => {
   }
 });
 
+// Listar dispositivos disponíveis (não atribuídos a nenhum paciente)
+router.get('/devices/available', async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    // Lista de todos os dispositivos IoT cadastrados
+    const allDevices = ['Pulseira_DSIM', 'Pulseira_02', 'Pulseira_03'];
+    
+    // Buscar todos os pacientes para verificar quais dispositivos estão em uso
+    const result = await dynamoDB.send(
+      new ScanCommand({
+        TableName: TABLES.PATIENTS,
+        ProjectionExpression: 'deviceId',
+      })
+    );
+
+    const usedDevices = (result.Items || [])
+      .map(item => item.deviceId)
+      .filter(Boolean); // Remove valores undefined/null
+
+    // Retornar dispositivos que não estão em uso
+    const availableDevices = allDevices.filter(device => !usedDevices.includes(device));
+    
+    res.json({
+      all: allDevices,
+      used: usedDevices,
+      available: availableDevices,
+    });
+  } catch (error) {
+    console.error('Erro ao buscar dispositivos disponíveis:', error);
+    res.status(500).json({ message: 'Erro ao buscar dispositivos disponíveis' });
+  }
+});
+
 // Criar novo paciente
 router.post('/', async (req: AuthRequest, res: Response): Promise<void> => {
   try {

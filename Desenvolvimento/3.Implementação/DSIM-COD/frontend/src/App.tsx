@@ -1,11 +1,12 @@
-import { Routes, Route } from "react-router-dom";
-import HomePage from "./pages/HomePage";
-import PainelListaPacientes from "./pages/PainelListaPacientes";
+import { Route, Routes } from "react-router-dom";
 import AddPatientPage from "./pages/AddPatientPage";
-import DetalhesPacientePage from "./pages/DetalhesPacientePage";
-import LoginPage from "./pages/LoginPage";
-import ConfigurarAlarmePage from "./pages/ConfigurarAlarmePage";
 import CadastroUsuarioPage from "./pages/CadastroUsuarioPage";
+import ConfigurarAlarmePage from "./pages/ConfigurarAlarmePage";
+import DetalhesPacientePage from "./pages/DetalhesPacientePage";
+import EditPatientPage from "./pages/EditPatientPage";
+import HomePage from "./pages/HomePage";
+import LoginPage from "./pages/LoginPage";
+import PainelListaPacientes from "./pages/PainelListaPacientes";
 
 function App() {
 
@@ -17,6 +18,7 @@ function App() {
       
       <Route path="/pacientes" element={<PainelListaPacientes />} />
       <Route path="/pacientes/adicionar" element={<AddPatientPage />} />
+      <Route path="/pacientes/editar/:id" element={<EditPatientPage />} />
       <Route 
         path="/pacientes/:pacienteId" 
         element={<DetalhesPacientePage />} 

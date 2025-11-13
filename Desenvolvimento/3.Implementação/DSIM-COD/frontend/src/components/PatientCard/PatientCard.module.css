@@ -28,6 +28,13 @@
   gap: 1.5rem;
 }
 
+.vitalItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
 .vitalIcon {
   display: flex;
   align-items: center;
@@ -37,16 +44,29 @@
   border-radius: 50%;
   color: #fff;
   font-size: 1.2rem;
+  transition: background-color 0.3s ease;
+}
+
+.vitalValue {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #333;
 }
 
 .stable {
-  background-color: #007bff; 
+  background-color: #28a745;
 }
 .warning {
-  background-color: #ffc107; 
+  background-color: #ffc107;
 }
 .danger {
-  background-color: #dc3545; 
+  background-color: #dc3545;
+}
+
+.buttonGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 }
 
 .viewButton {
@@ -60,8 +80,53 @@
   font-weight: 500;
   cursor: pointer;
   transition: background-color 0.2s ease;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
 }
 
 .viewButton:hover {
   background-color: #5a6268;
+}
+
+.editButton {
+  width: 100%;
+  padding: 0.75rem;
+  border: none;
+  background-color: #007bff;
+  color: white;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.editButton:hover {
+  background-color: #0056b3;
+}
+
+.deleteButton {
+  width: 100%;
+  padding: 0.75rem;
+  border: none;
+  background-color: #dc3545;
+  color: white;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.deleteButton:hover {
+  background-color: #a71d2a;
 }

@@ -13,18 +13,34 @@ Backend do sistema DSIM de monitoramento de pacientes usando IoT, Node.js/Expres
                                                       │ Stream
                                                       ▼
 ┌──────────────┐       ┌──────────────┐       ┌──────────────┐
-│   Frontend   │◀──────│     API      │       │    Lambda    │
-│    React     │ HTTP  │   Gateway    │       │  Processor   │
+│   Frontend   │◀──────│   Backend    │       │    Lambda    │
+│    React     │ HTTP  │  Node.js/TS  │       │  Processor   │
 └──────┬───────┘       └──────┬───────┘       └──────┬───────┘
        │                      │                       │
-       │ WebSocket            │ Proxy                 │ Update
+       │ WebSocket            │ AWS SDK               │ MEWS
        │                      ▼                       ▼
        │               ┌──────────────┐       ┌──────────────┐
-       └──────────────▶│   Backend    │       │  DynamoDB    │
-                       │ Node.js/EC2  │◀──────│   Patients   │
-                       └──────────────┘       │   Alarms     │
-                                              └──────────────┘
+       └──────────────▶│  DynamoDB    │◀──────│  DynamoDB    │
+                       │   Patients   │       │   Patients   │
+                       │   Users      │       │   Alarms     │
+                       │   Alarms     │       └──────────────┘
+                       │ Connections  │
+                       └──────────────┘
 ```
+
+## 🎯 Funcionalidades
+
+- ✅ **API RESTful** com Express e TypeScript
+- ✅ **Autenticação JWT** com bcrypt
+- ✅ **CRUD Completo de Pacientes** (Create, Read, Update, Delete)
+- ✅ **Gestão de Dispositivos IoT** (atribuir/listar pulseiras disponíveis)
+- ✅ **Sistema de Alarmes** personalizável por paciente
+- ✅ **WebSocket Server** para alertas em tempo real
+- ✅ **Integração com DynamoDB** (5 tabelas)
+- ✅ **Integração com Lambda** para processamento de streams
+- ✅ **CORS configurado** para frontend React
+- ✅ **Validações de dados** completas
+- ✅ **Logs estruturados** para debugging
 
 ## 📁 Estrutura do Projeto
 
@@ -32,32 +48,33 @@ Backend do sistema DSIM de monitoramento de pacientes usando IoT, Node.js/Expres
 backend/
 ├── src/
 │   ├── config/
-│   │   └── aws.ts              # Configuração AWS SDK
+│   │   └── aws.ts              # Configuração AWS SDK (DynamoDB + IoT)
 │   ├── middleware/
-│   │   └── auth.ts             # Middleware JWT
+│   │   └── auth.ts             # Middleware JWT autenticação
 │   ├── routes/
-│   │   ├── auth.ts             # Rotas de autenticação
-│   │   ├── pacientes.ts        # CRUD de pacientes
+│   │   ├── auth.ts             # Login e registro
+│   │   ├── pacientes.ts        # CRUD pacientes + devices
 │   │   ├── alarms.ts           # Configuração de alarmes
 │   │   └── historico.ts        # Histórico de sinais vitais
 │   ├── types/
-│   │   └── index.ts            # Tipos TypeScript
+│   │   └── index.ts            # Interfaces TypeScript
 │   ├── utils/
-│   │   └── mews.ts             # Cálculo MEWS
+│   │   └── mews.ts             # Cálculo MEWS (Modified Early Warning Score)
 │   ├── server.ts               # Servidor Express principal
-│   └── websocket.ts            # Servidor WebSocket
+│   └── websocket.ts            # Servidor WebSocket (porta 8080)
 ├── lambda/
 │   ├── src/
-│   │   └── index.ts            # Função Lambda
+│   │   └── index.ts            # Lambda MEWS Processor
 │   ├── package.json
-│   └── tsconfig.json
+│   ├── tsconfig.json
+│   └── CRIAR_LAMBDA.md         # Guia de deploy Lambda
 ├── scripts/
-│   └── setup-dynamodb.sh       # Script de setup DynamoDB
+│   └── setup-dynamodb.sh       # Script de criação de tabelas
 ├── package.json
 ├── tsconfig.json
 ├── .env.example
-├── DEPLOYMENT_GUIDE.md         # Guia de implantação
-├── DYNAMODB_STRUCTURE.md       # Estrutura das tabelas
+├── DEPLOYMENT_GUIDE.md         # Guia de implantação completo
+├── QUICK_REFERENCE.md          # Referência rápida de comandos
 └── README.md
 ```
 
@@ -82,29 +99,36 @@ Edite o arquivo `.env` com suas credenciais AWS:
 ```env
 PORT=9999
 NODE_ENV=development
-JWT_SECRET=seu_jwt_secret_aqui
+JWT_SECRET=seu_jwt_secret_super_seguro
 
+# AWS Credentials (AWS Academy requer SESSION_TOKEN)
 AWS_REGION=us-east-1
 AWS_ACCESS_KEY_ID=sua_access_key
 AWS_SECRET_ACCESS_KEY=sua_secret_key
+AWS_SESSION_TOKEN=seu_session_token  # OBRIGATÓRIO no AWS Academy
 
+# DynamoDB Tables
 DYNAMODB_USERS_TABLE=DSIM_Users
 DYNAMODB_PATIENTS_TABLE=DSIM_Patients
 DYNAMODB_SENSOR_DATA_TABLE=DSIM_SensorData
 DYNAMODB_ALARMS_TABLE=DSIM_Alarms
+DYNAMODB_CONNECTIONS_TABLE=DSIM_Connections
 ```
 
 ### 3. Criar Tabelas DynamoDB
 
+**Linux/Mac:**
 ```bash
-# Dar permissão de execução
 chmod +x scripts/setup-dynamodb.sh
-
-# Executar script
 ./scripts/setup-dynamodb.sh
 ```
 
-Ou crie manualmente seguindo o guia em `DYNAMODB_STRUCTURE.md`.
+**Windows:**
+```bash
+scripts\setup-dynamodb.bat
+```
+
+Ou consulte `DEPLOYMENT_GUIDE.md` para criação manual via Console AWS.
 
 ### 4. Compilar TypeScript
 
@@ -118,7 +142,9 @@ npm run build
 npm run dev
 ```
 
-O servidor estará rodando em `http://localhost:9999`.
+O servidor estará rodando em:
+- **API REST:** `http://localhost:9999`
+- **WebSocket:** `ws://localhost:8080`
 
 ## 📡 API Endpoints
 
@@ -130,23 +156,23 @@ Registrar novo usuário.
 **Body:**
 ```json
 {
-  "nome": "Admin",
+  "nome": "Admin DSIM",
   "email": "admin@dsim.com",
   "senha": "senha123",
   "role": "admin"
 }
 ```
 
-**Response:**
+**Response:** `201 Created`
 ```json
 {
   "message": "Usuário cadastrado com sucesso",
-  "userId": "uuid"
+  "userId": "uuid-v4"
 }
 ```
 
 #### `POST /api/auth/login`
-Fazer login.
+Fazer login e receber JWT token.
 
 **Body:**
 ```json
@@ -156,22 +182,64 @@ Fazer login.
 }
 ```
 
-**Response:**
+**Response:** `200 OK`
 ```json
 {
-  "token": "jwt_token",
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
   "role": "admin",
   "userId": "uuid",
-  "nome": "Admin"
+  "nome": "Admin DSIM"
 }
 ```
 
+---
+
 ### Pacientes
 
-> **Nota:** Todas as rotas de pacientes requerem autenticação (Bearer Token).
+> **Nota:** Todas as rotas requerem autenticação (Bearer Token).
 
 #### `GET /api/pacientes`
 Listar todos os pacientes.
+
+**Headers:**
+```
+Authorization: Bearer <seu_token_jwt>
+```
+
+**Response:** `200 OK`
+```json
+[
+  {
+    "id": "uuid",
+    "nome": "Maria Silva",
+    "dataNascimento": "1980-05-15",
+    "genero": "Mulher",
+    "relacionamento": "Casado(a)",
+    "telefone": "(11) 98765-4321",
+    "imageUrl": "data:image/jpeg;base64,...",
+    "deviceId": "Pulseira_DSIM",
+    "contatoEmergencia": {
+      "nome": "João Silva",
+      "telefone": "(11) 91234-5678",
+      "email": "joao@email.com",
+      "parentesco": "Cônjuge"
+    },
+    "informacaoMedica": {
+      "tipoSangue": "O+",
+      "possuiDeficiencia": "Não",
+      "qualDeficiencia": "",
+      "ProblemaEspecifico": "Diabetes, Hipertensão"
+    },
+    "vitals": {
+      "oxigenio": { "value": 98, "status": "stable" },
+      "temperatura": { "value": 36.5, "status": "stable" },
+      "batimentos": { "value": 75, "status": "stable" }
+    },
+    "escoreMEWS": 0,
+    "statusMEWS": "Baixo Risco"
+  }
+]
+```
 
 #### `GET /api/pacientes/:id`
 Buscar paciente por ID.
@@ -188,40 +256,75 @@ Criar novo paciente.
   "relacionamento": "Casado(a)",
   "telefone": "(11) 98765-4321",
   "imageUrl": "data:image/jpeg;base64,...",
+  "deviceId": "Pulseira_DSIM",
   "contatoEmergencia": {
     "nome": "João Silva",
     "telefone": "(11) 91234-5678",
     "email": "joao@email.com",
-    "instagram": "@joaosilva"
+    "parentesco": "Cônjuge"
   },
   "informacaoMedica": {
     "tipoSangue": "O+",
-    "Deficiencia": "Nenhuma",
+    "possuiDeficiencia": "Não",
+    "qualDeficiencia": "",
     "ProblemaEspecifico": "Diabetes, Hipertensão"
+  },
+  "vitals": {
+    "oxigenio": { "value": 98, "status": "stable" },
+    "temperatura": { "value": 36.5, "status": "stable" },
+    "batimentos": { "value": 75, "status": "stable" }
   }
 }
 ```
 
+**Response:** `201 Created`
+
 #### `PUT /api/pacientes/:id`
-Atualizar paciente.
+Atualizar dados do paciente.
+
+**Body:** Mesma estrutura do POST (todos os campos)
+
+**Response:** `200 OK`
 
 #### `DELETE /api/pacientes/:id`
 Deletar paciente.
 
-#### `POST /api/pacientes/:id/device`
-Vincular dispositivo ao paciente.
-
-**Body:**
+**Response:** `200 OK`
 ```json
 {
-  "deviceId": "ESP8266_001"
+  "message": "Paciente deletado com sucesso"
 }
 ```
+
+#### `GET /api/pacientes/devices/available`
+Listar dispositivos IoT disponíveis.
+
+**Response:** `200 OK`
+```json
+{
+  "all": ["Pulseira_DSIM", "Pulseira_02", "Pulseira_03"],
+  "used": ["Pulseira_DSIM"],
+  "available": ["Pulseira_02", "Pulseira_03"]
+}
+```
+
+---
 
 ### Alarmes
 
 #### `GET /api/alarms/:pacienteId`
 Obter configuração de alarmes do paciente.
+
+**Response:** `200 OK`
+```json
+{
+  "pacienteId": "uuid",
+  "batimentos_min": 50,
+  "batimentos_max": 110,
+  "oxigenio_min": 92,
+  "temperatura_max": 38.0
+}
+```
 
 #### `POST /api/alarms/:pacienteId`
 Configurar alarmes personalizados.
@@ -236,176 +339,260 @@ Configurar alarmes personalizados.
 }
 ```
 
+**Response:** `200 OK`
+
+---
+
 ### Histórico
 
 #### `GET /api/historico/:pacienteId?periodo=dia`
 Buscar histórico de sinais vitais.
 
 **Query params:**
-- `periodo`: `dia`, `mes` ou `ano`
+- `periodo`: `dia` (últimas 24h), `mes` (últimos 30 dias) ou `ano` (últimos 12 meses)
+
+**Response:** `200 OK`
+```json
+{
+  "periodo": "dia",
+  "dados": [
+    {
+      "timestamp": "2025-11-13T10:30:00.000Z",
+      "deviceId": "Pulseira_DSIM",
+      "oxigenio": 98,
+      "temperatura": 36.5,
+      "batimentos": 75
+    }
+  ]
+}
+```
 
 #### `GET /api/historico/:pacienteId/latest`
 Buscar dados mais recentes do paciente.
 
-## 🔌 WebSocket
+**Response:** `200 OK`
 
-Conectar ao WebSocket:
+---
 
+## 🔌 WebSocket (Porta 8080)
+
+Servidor WebSocket para alertas em tempo real.
+
+**Conectar:**
 ```javascript
 const ws = new WebSocket('ws://localhost:8080');
 
 ws.onopen = () => {
-  // Registrar interesse em um paciente
-  ws.send(JSON.stringify({
-    type: 'register',
-    pacienteId: 'uuid-do-paciente'
-  }));
+  console.log('Conectado ao WebSocket');
 };
 
 ws.onmessage = (event) => {
   const alert = JSON.parse(event.data);
   console.log('Alerta recebido:', alert);
+  // {
+  //   tipo: 'MEWS_ALTO',
+  //   pacienteId: 'uuid',
+  //   mensagem: 'Paciente Maria Silva - MEWS Alto (Score: 4)',
+  //   escoreMEWS: 4,
+  //   timestamp: '2025-11-13T10:30:00.000Z'
+  // }
 };
 ```
 
-**Formato de alertas:**
-```json
-{
-  "type": "vital_alert",
-  "pacienteId": "uuid",
-  "pacienteNome": "Maria Silva",
-  "timestamp": 1699900000000,
-  "vitals": {
-    "batimentos": 85,
-    "oxigenio": 97,
-    "temperatura": 36.5
-  },
-  "mews": {
-    "score": 2,
-    "status": "warning"
-  },
-  "alerts": ["Batimentos altos: 125 bpm"]
-}
-```
-
-## 🧮 Cálculo MEWS
-
-O sistema calcula automaticamente o Modified Early Warning Score (MEWS) baseado em:
-
-### Frequência Cardíaca (bpm)
-- < 40: +3
-- 40-50: +1
-- 50-100: 0
-- 101-110: +1
-- 111-129: +2
-- ≥ 130: +3
-
-### Saturação de O2 (%)
-- < 85: +3
-- 85-89: +2
-- 90-94: +1
-- ≥ 95: 0
-
-### Temperatura (°C)
-- < 35: +2
-- 35-35.9: +1
-- 36-38: 0
-- 38.1-39: +1
-- > 39: +2
-
-### Status
-- **Stable**: Score 0-2
-- **Warning**: Score 3-4
-- **Danger**: Score ≥ 5
-
-## 🔧 Scripts Disponíveis
-
-```bash
-# Desenvolvimento com hot-reload
-npm run dev
-
-# Compilar TypeScript
-npm run build
-
-# Executar em produção
-npm start
-
-# Executar testes (se configurado)
-npm test
-```
-
-## 📦 Deploy
-
-Siga o guia completo em [`DEPLOYMENT_GUIDE.md`](./DEPLOYMENT_GUIDE.md) para:
-
-1. Configurar DynamoDB
-2. Configurar AWS IoT Core
-3. Deploy da Lambda
-4. Configurar API Gateway
-5. Deploy no EC2
-6. Deploy do frontend no Amplify
-
-## 🔐 Segurança
-
-- Todas as senhas são hasheadas com bcrypt
-- Autenticação via JWT
-- Comunicação IoT via TLS/certificados
-- Variáveis sensíveis em `.env` (não commitadas)
-
-## 📊 Monitoramento
-
-### Logs locais
-```bash
-# Ver logs em desenvolvimento
-npm run dev
-
-# Logs em produção (PM2)
-pm2 logs dsim-api
-```
-
-### AWS CloudWatch
-- Lambda: `/aws/lambda/DSIM-ProcessSensorData`
-- IoT Core: AWS IoT > Logs
-- DynamoDB: Metrics & Alarms
-
-## 🐛 Troubleshooting
-
-### Erro de autenticação AWS
-Verifique se as credenciais no `.env` estão corretas:
-```bash
-aws sts get-caller-identity
-```
-
-### Tabelas DynamoDB não encontradas
-Execute o script de setup:
-```bash
-./scripts/setup-dynamodb.sh
-```
-
-### Porta já em uso
-Altere a porta no `.env`:
-```env
-PORT=9000
-```
-
-## 🤝 Contribuindo
-
-1. Fork o projeto
-2. Crie uma branch: `git checkout -b feature/nova-funcionalidade`
-3. Commit: `git commit -m 'Adiciona nova funcionalidade'`
-4. Push: `git push origin feature/nova-funcionalidade`
-5. Abra um Pull Request
-
-## 📄 Licença
-
-MIT
-
-## 👥 Equipe
-
-Projeto DSIM - Sistema de Monitoramento de Pacientes IoT
+**Tipos de Alertas:**
+- `MEWS_BAIXO` (Score 0-2)
+- `MEWS_MEDIO` (Score 3-4)
+- `MEWS_ALTO` (Score ≥5)
+- `LIMITE_EXCEDIDO` (Alarme personalizado disparado)
 
 ---
 
-Para mais informações, consulte:
-- [Guia de Deployment](./DEPLOYMENT_GUIDE.md)
-- [Estrutura DynamoDB](./DYNAMODB_STRUCTURE.md)
+## 🔧 Tecnologias
+
+- **Node.js 18+**: Runtime JavaScript
+- **TypeScript 5**: Tipagem estática
+- **Express 4**: Framework web
+- **AWS SDK v3**: DynamoDB, IoT Core
+- **JWT (jsonwebtoken)**: Autenticação
+- **bcrypt**: Hash de senhas
+- **ws**: WebSocket server
+- **CORS**: Cross-Origin Resource Sharing
+- **uuid**: Geração de IDs únicos
+
+---
+
+## 🗄️ Estrutura DynamoDB
+
+### 1. DSIM_Users
+**Partition Key:** `id` (String)
+
+Armazena usuários do sistema (admins, enfermeiros).
+
+### 2. DSIM_Patients
+**Partition Key:** `id` (String)
+
+Armazena dados dos pacientes, incluindo sinais vitais atuais e MEWS.
+
+### 3. DSIM_SensorData
+**Partition Key:** `deviceId` (String)  
+**Sort Key:** `timestamp` (String)  
+**Stream:** Enabled (NEW_AND_OLD_IMAGES)
+
+Armazena leituras brutas das pulseiras IoT. Stream dispara Lambda.
+
+### 4. DSIM_Alarms
+**Partition Key:** `pacienteId` (String)
+
+Configurações personalizadas de alarmes por paciente.
+
+### 5. DSIM_Connections
+**Partition Key:** `connectionId` (String)
+
+Gerencia conexões WebSocket ativas.
+
+Consulte `DEPLOYMENT_GUIDE.md` para detalhes de criação e índices.
+
+---
+
+## 🧪 Testes
+
+### Testar API
+
+Use o arquivo `test-api.js`:
+
+```bash
+node test-api.js
+```
+
+Testa os seguintes endpoints:
+1. GET `/health` - Verificar se API está online
+2. POST `/api/auth/register` - Criar usuário de teste
+3. POST `/api/auth/login` - Login e obter token JWT
+4. GET `/api/pacientes` - Listar pacientes (autenticado)
+
+**Credenciais de teste:**
+- Email: `admin@dsim.com`
+- Senha: `senha123`
+
+---
+
+## 🚀 Deploy
+
+### AWS EC2 (Recomendado)
+
+1. Crie uma instância EC2 (t2.micro)
+2. Instale Node.js 18+
+3. Clone o repositório
+4. Configure `.env` com credenciais IAM
+5. Instale dependências: `npm install`
+6. Compile: `npm run build`
+7. Execute: `npm start`
+8. Configure Security Group para liberar portas 9999 e 8080
+
+### AWS Lambda (Function Processor)
+
+Consulte `lambda/CRIAR_LAMBDA.md` para deploy da função Lambda.
+
+**Resumo:**
+1. Compile: `cd lambda && npm run build`
+2. Empacote: `npm run package`
+3. Faça upload de `lambda-function.zip` no Console AWS
+4. Configure trigger: DynamoDB Stream (DSIM_SensorData)
+5. Role: LabRole (AWS Academy) ou role customizada
+
+---
+
+## 📝 Variáveis de Ambiente
+
+| Variável | Descrição | Exemplo |
+|---|---|---|
+| `PORT` | Porta do servidor Express | `9999` |
+| `NODE_ENV` | Ambiente de execução | `development` ou `production` |
+| `JWT_SECRET` | Chave secreta para JWT | `super_secret_key_123` |
+| `AWS_REGION` | Região AWS | `us-east-1` |
+| `AWS_ACCESS_KEY_ID` | Access Key AWS | `AKIAIOSFODNN7EXAMPLE` |
+| `AWS_SECRET_ACCESS_KEY` | Secret Key AWS | `wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY` |
+| `AWS_SESSION_TOKEN` | Session Token (AWS Academy) | `FwoGZXIvYXd...` |
+| `DYNAMODB_USERS_TABLE` | Nome tabela de usuários | `DSIM_Users` |
+| `DYNAMODB_PATIENTS_TABLE` | Nome tabela de pacientes | `DSIM_Patients` |
+| `DYNAMODB_SENSOR_DATA_TABLE` | Nome tabela de dados IoT | `DSIM_SensorData` |
+| `DYNAMODB_ALARMS_TABLE` | Nome tabela de alarmes | `DSIM_Alarms` |
+| `DYNAMODB_CONNECTIONS_TABLE` | Nome tabela de WebSocket | `DSIM_Connections` |
+
+---
+
+## 🐛 Troubleshooting
+
+### Erro: `Missing credentials in config`
+
+**Solução:** Verifique se `.env` contém todas as credenciais AWS, incluindo `AWS_SESSION_TOKEN` se estiver usando AWS Academy.
+
+### Erro: `Cannot connect to DynamoDB`
+
+**Solução:** 
+1. Verifique se as credenciais AWS estão corretas
+2. Confirme que as tabelas existem: `aws dynamodb list-tables`
+3. Teste a conexão: `npm run test`
+
+### Erro: `CORS blocked`
+
+**Solução:** Verifique se o frontend está na lista de origens permitidas em `server.ts`:
+
+```typescript
+app.use(cors({
+  origin: ['http://localhost:5173', 'http://localhost:3000'],
+  credentials: true
+}));
+```
+
+### Lambda não está processando streams
+
+**Solução:**
+1. Verifique se o Stream está habilitado na tabela `DSIM_SensorData`
+2. Confirme que a função Lambda tem permissões (LabRole ou custom role)
+3. Verifique CloudWatch Logs para erros
+
+### WebSocket não conecta
+
+**Solução:**
+1. Verifique se a porta 8080 está aberta no firewall
+2. Confirme que o servidor WebSocket está rodando: `netstat -ano | findstr :8080`
+3. Teste manualmente: `wscat -c ws://localhost:8080`
+
+---
+
+## 📚 Documentação Adicional
+
+- **[DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md)**: Guia completo de deploy AWS
+- **[QUICK_REFERENCE.md](QUICK_REFERENCE.md)**: Comandos rápidos e cheatsheet
+- **[lambda/CRIAR_LAMBDA.md](lambda/CRIAR_LAMBDA.md)**: Deploy da Lambda Function
+- **Frontend README**: `../frontend/README.md`
+
+---
+
+## 👥 Suporte
+
+Para problemas ou dúvidas:
+
+1. Verifique os logs do servidor: `npm run dev` (modo verboso)
+2. Consulte CloudWatch Logs (Lambda e DynamoDB Streams)
+3. Revise a documentação da API acima
+4. Teste endpoints com `test-api.js`
+
+---
+
+## 🔐 Segurança
+
+- ✅ Senhas criptografadas com bcrypt (10 rounds)
+- ✅ JWT com expiração de 24h
+- ✅ Middleware de autenticação em todas as rotas protegidas
+- ✅ Validação de dados de entrada
+- ✅ CORS configurado para origens específicas
+- ⚠️ **Não commitar** arquivo `.env` no Git
+- ⚠️ **Renovar** credenciais AWS Academy a cada sessão
+
+---
+
+## 📄 Licença
+
+Projeto acadêmico - DSIM 2025

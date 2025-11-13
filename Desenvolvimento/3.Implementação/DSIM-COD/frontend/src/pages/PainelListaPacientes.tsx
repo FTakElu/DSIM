@@ -1,12 +1,12 @@
 
 
-import React, { useState, useEffect } from "react"; 
+import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import logo from "../assets/logo-dsim.png";
 import PatientCard from "../components/PatientCard/PatientCard";
-import { Pacientes } from "../Types/PacientesType"; 
+import api from '../service/api';
+import { Pacientes } from "../Types/PacientesType";
 import styles from "./PainelListaPacientes.module.css";
-import logo from "../assets/logo-dsim.png"; 
-import api from '../service/api'; 
 
 
  /*
@@ -35,26 +35,26 @@ const PainelListaPacientes: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchPacientes = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-
-        const response = await api.get('/api/pacientes');
-
-        setPatients(response.data); 
-
-      } catch (e: any) {
-        console.error("Falha ao buscar pacientes:", e);
-        const errorMsg = e.response?.data?.message || e.message || "Não foi possível carregar os pacientes.";
-        setError(errorMsg);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchPacientes(); 
   }, []); 
+
+  const fetchPacientes = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const response = await api.get('/api/pacientes');
+
+      setPatients(response.data); 
+
+    } catch (e: any) {
+      console.error("Falha ao buscar pacientes:", e);
+      const errorMsg = e.response?.data?.message || e.message || "Não foi possível carregar os pacientes.";
+      setError(errorMsg);
+    } finally {
+      setLoading(false);
+    }
+  };
   
   if (loading) {
     return <div className={styles.message}>Carregando pacientes...</div>;
@@ -80,7 +80,11 @@ const PainelListaPacientes: React.FC = () => {
         ) : (
           <div className={styles.patientGrid}>
             {patients.map((paciente) => (
-              <PatientCard key={paciente.id} patient={paciente} />
+              <PatientCard 
+                key={paciente.id} 
+                patient={paciente} 
+                onDelete={fetchPacientes}
+              />
             ))}
           </div>
         )}

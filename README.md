@@ -62,10 +62,13 @@ O sistema monitora continuamente sinais vitais, localização e movimento, emiti
 
 ### Backend (Node.js/Express)
 - ✅ **API RESTful**: Endpoints para pacientes, alarmes, histórico e autenticação
+- ✅ **CRUD Completo**: Create, Read, Update, Delete para gerenciamento de pacientes
+- ✅ **Gestão de Dispositivos IoT**: Endpoint para listar pulseiras disponíveis e atribuí-las
 - ✅ **Autenticação JWT**: Login seguro com tokens de 24 horas
-- ✅ **Cálculo MEWS**: Modified Early Warning Score automático
-- ✅ **WebSocket**: Alertas em tempo real para o frontend
+- ✅ **Cálculo MEWS**: Modified Early Warning Score automático baseado em sinais vitais
+- ✅ **WebSocket**: Alertas em tempo real para o frontend (porta 8080)
 - ✅ **Integração AWS**: DynamoDB, IoT Core e Lambda
+- ✅ **Validações**: Verificação de dados de entrada e tratamento de erros
 
 ### Lambda Processor
 - ✅ **Processamento de Stream**: Analisa dados do DynamoDB Stream
@@ -75,10 +78,17 @@ O sistema monitora continuamente sinais vitais, localização e movimento, emiti
 
 ### Frontend (React + TypeScript)
 - ✅ **Dashboard de Pacientes**: Visualização em cards com dados em tempo real
-- ✅ **Cadastro Completo**: Formulário com foto e histórico médico
+- ✅ **Sistema de Cores Inteligente**: 
+  - 🟢 Verde: Sinais vitais normais
+  - 🟡 Amarelo: Valores próximos aos limites (atenção)
+  - 🔴 Vermelho: Valores críticos excedendo limites
+- ✅ **Cadastro Completo**: Formulário com upload de foto, dados pessoais, contato de emergência e histórico médico
+- ✅ **Edição de Pacientes**: Atualização de dados com formulário pré-preenchido
+- ✅ **Exclusão Segura**: Remoção de pacientes com confirmação
+- ✅ **Gestão de Dispositivos**: Atribuição e visualização de pulseiras IoT disponíveis
 - ✅ **Histórico Visual**: Gráficos interativos de sinais vitais
 - ✅ **Alertas em Tempo Real**: Notificações via WebSocket
-- ✅ **Configuração de Alarmes**: Limites personalizados por paciente
+- ✅ **Configuração de Alarmes**: Limites personalizados por paciente com base em MEWS
 - ✅ **Interface Responsiva**: Adaptável para desktop, tablet e mobile
 
 ## 📁 Estrutura do Projeto

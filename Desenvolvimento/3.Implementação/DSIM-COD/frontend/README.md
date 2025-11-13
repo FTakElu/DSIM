@@ -4,13 +4,20 @@ Interface web para monitoramento em tempo real de sinais vitais de pacientes atr
 
 ## 🎯 Funcionalidades
 
-- ✅ **Dashboard de Pacientes**: Visualização em cards com dados em tempo real
-- ✅ **Cadastro de Pacientes**: Formulário completo com dados pessoais e foto
+- ✅ **Dashboard de Pacientes**: Visualização em cards com dados em tempo real e cores dinâmicas
+- ✅ **Cadastro Completo de Pacientes**: Formulário com upload de foto, dados pessoais, contato de emergência e histórico médico
+- ✅ **Edição de Pacientes**: Atualização de dados com formulário pré-preenchido
+- ✅ **Exclusão de Pacientes**: Remoção segura com confirmação
+- ✅ **Sistema de Cores Inteligente**: 
+  - 🟢 Verde: Sinais vitais normais
+  - 🟡 Amarelo: Valores próximos aos limites (atenção)
+  - 🔴 Vermelho: Valores críticos excedendo limites
 - ✅ **Histórico de Sinais Vitais**: Gráficos e tabelas com dados históricos
 - ✅ **Alertas em Tempo Real**: Notificações via WebSocket quando limites são excedidos
 - ✅ **Sistema de Alarmes**: Configuração personalizada de limites por paciente
 - ✅ **Score MEWS**: Cálculo automático do Modified Early Warning Score
 - ✅ **Autenticação JWT**: Login seguro para profissionais de saúde
+- ✅ **Gestão de Dispositivos IoT**: Atribuição e gerenciamento de pulseiras
 - ✅ **Responsivo**: Interface adaptável para desktop, tablet e mobile
 
 ## 🛠️ Tecnologias
@@ -41,17 +48,24 @@ frontend/
 │   │   ├── PageShell.tsx # Layout padrão das páginas
 │   │   └── Sobre/       # Seção "Sobre o projeto"
 │   ├── pages/          # Páginas da aplicação
-│   │   ├── AddPatientPage.tsx    # Cadastro de paciente
-│   │   ├── Dashboard.tsx          # Listagem de pacientes
-│   │   ├── HistoricoPage.tsx      # Histórico detalhado
-│   │   ├── HomePage.tsx           # Página inicial
-│   │   ├── LoginPage.tsx          # Login
-│   │   └── PatientDetailsPage.tsx # Detalhes do paciente
+│   │   ├── AddPatientPage.tsx         # Cadastro de paciente
+│   │   ├── EditPatientPage.tsx        # Edição de paciente
+│   │   ├── DetalhesPacientePage.tsx   # Detalhes do paciente
+│   │   ├── PainelListaPacientes.tsx   # Listagem de pacientes
+│   │   ├── ConfigurarAlarmePage.tsx   # Configuração de alarmes
+│   │   ├── HistoricoPage.tsx          # Histórico detalhado
+│   │   ├── HomePage.tsx               # Página inicial
+│   │   ├── LoginPage.tsx              # Login
+│   │   └── CadastroUsuarioPage.tsx    # Cadastro de usuário
 │   ├── service/        # Integração com backend
-│   │   └── api.ts      # Cliente HTTP configurado
+│   │   ├── api.ts      # Cliente HTTP configurado
+│   │   └── mockData.ts # Dados de teste (se necessário)
+│   ├── utils/          # Utilitários e helpers
+│   │   ├── mews.ts     # Cálculo do MEWS
+│   │   └── vitalStatus.ts # Sistema de cores dinâmicas
 │   ├── styles/         # Estilos globais e temas
 │   ├── Types/          # Definições TypeScript
-│   │   └── types.ts    # Interfaces de Paciente, Dados, etc.
+│   │   └── PacientesType.ts # Interfaces de Paciente, Vitals, etc.
 │   ├── App.tsx         # Componente raiz com rotas
 │   ├── main.tsx        # Entry point da aplicação
 │   └── index.css       # Estilos globais
@@ -112,35 +126,66 @@ Os arquivos otimizados estarão em `dist/`
 ### 2. **Cadastrar Paciente**
 
 1. Faça login
-2. Clique em **"Adicionar Paciente"**
-3. Preencha:
-   - Nome, CPF, Data de Nascimento
-   - Dados de contato
-   - Histórico médico
-   - Foto (opcional)
-4. Clique em **"Cadastrar"**
+2. Clique em **"Adicionar"** no painel de pacientes
+3. Preencha todos os campos:
+   - **Informações Pessoais**: Nome, Data de Nascimento, Gênero, Estado Civil, Telefone
+   - **ID da Pulseira IoT**: Selecione um dispositivo disponível
+   - **Contato de Emergência**: Nome, Telefone, Email, Parentesco
+   - **Ficha Médica**: Tipo Sanguíneo, Possui Deficiência?, Problemas Específicos
+   - **Foto**: Upload opcional (clique em "Escolher Foto")
+4. Clique em **"Cadastrar Paciente"**
 
-### 3. **Vincular Device IoT**
+### 3. **Editar Paciente**
 
-Após cadastrar o paciente, vincule a pulseira:
+1. No card do paciente, clique no botão **"Editar"** (azul)
+2. Modifique os campos necessários
+3. Altere a foto se desejar (clique em "Alterar Foto")
+4. Clique em **"Atualizar Paciente"**
 
-```bash
-curl -X POST http://localhost:9999/api/pacientes/PACIENTE_ID/device \
-  -H "Authorization: Bearer SEU_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{"deviceId":"Pulseira_DSIM"}'
-```
+### 4. **Excluir Paciente**
 
-### 4. **Monitorar em Tempo Real**
+1. No card do paciente, clique no botão **"Excluir"** (vermelho)
+2. Confirme a exclusão no dialog
+3. O paciente será removido permanentemente
+
+### 5. **Sistema de Cores dos Sinais Vitais**
+
+Os cards exibem cores dinâmicas baseadas nos valores dos sinais vitais:
+
+**🟢 Verde (Normal):**
+- Saturação O₂: ≥95%
+- Temperatura: 36.0-37.5°C
+- Batimentos: 60-100 bpm
+
+**🟡 Amarelo (Atenção):**
+- Saturação O₂: 92-94% (próximo ao limite)
+- Temperatura: 37.6-37.9°C ou 35.5-35.9°C
+- Batimentos: 51-60 bpm ou 101-109 bpm
+
+**🔴 Vermelho (Crítico):**
+- Saturação O₂: <92%
+- Temperatura: ≥38°C ou <35°C
+- Batimentos: ≤50 bpm ou ≥110 bpm
+
+**Limites MEWS Padrão (não podem ser removidos):**
+- Batimentos: 51-110 bpm
+- Saturação O₂: ≥92%
+- Temperatura: ≤38.0°C
+
+### 6. **Monitorar em Tempo Real**
 
 1. No **Dashboard**, você verá o card do paciente
-2. Dados atualizados automaticamente a cada 10s
-3. **Cores dos cards indicam situação:**
+2. Cada card mostra:
+   - 🩸 **Saturação de O₂** (%)
+   - 🌡️ **Temperatura** (°C)
+   - ❤️ **Batimentos Cardíacos** (bpm)
+3. Dados atualizados automaticamente via WebSocket
+4. **Cores indicam situação:**
    - 🟢 Verde: Tudo normal
-   - 🟡 Amarelo: Atenção (MEWS elevado)
-   - 🔴 Vermelho: Alerta crítico
+   - 🟡 Amarelo: Atenção (próximo aos limites)
+   - 🔴 Vermelho: Alerta crítico (limites excedidos)
 
-### 5. **Ver Histórico**
+### 7. **Ver Histórico**
 
 1. Clique no card do paciente
 2. Veja gráficos de:
@@ -149,14 +194,17 @@ curl -X POST http://localhost:9999/api/pacientes/PACIENTE_ID/device \
    - Temperatura corporal
 3. Filtre por período: Dia, Mês, Ano
 
-### 6. **Configurar Alarmes**
+### 8. **Configurar Alarmes**
 
 1. Na página de detalhes do paciente
 2. Clique em **"Configurar Alarmes"**
 3. Defina limites personalizados:
    - BPM mínimo/máximo
    - SpO2 mínimo
-   - Temperatura mínima/máxima
+   - Temperatura máxima
+4. Clique em **"Salvar Configuração"**
+
+**Nota:** Os limites MEWS padrão sempre serão respeitados, mesmo com configurações personalizadas.
 
 ## 🔌 Integração com Backend
 
@@ -164,16 +212,16 @@ curl -X POST http://localhost:9999/api/pacientes/PACIENTE_ID/device \
 
 ```typescript
 // Autenticação
-POST /api/auth/register  // Cadastro
-POST /api/auth/login     // Login
+POST /api/auth/register  // Cadastro de usuário
+POST /api/auth/login     // Login com JWT
 
 // Pacientes
-GET  /api/pacientes           // Listar todos
-POST /api/pacientes           // Criar novo
-GET  /api/pacientes/:id       // Buscar por ID
-PUT  /api/pacientes/:id       // Atualizar
-DELETE /api/pacientes/:id     // Deletar
-POST /api/pacientes/:id/device // Vincular device
+GET  /api/pacientes              // Listar todos
+POST /api/pacientes              // Criar novo
+GET  /api/pacientes/:id          // Buscar por ID
+PUT  /api/pacientes/:id          // Atualizar dados
+DELETE /api/pacientes/:id        // Excluir paciente
+GET  /api/pacientes/devices/available // Listar dispositivos
 
 // Histórico
 GET /api/historico/:pacienteId?periodo=dia|mes|ano
