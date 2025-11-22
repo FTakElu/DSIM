@@ -370,6 +370,7 @@ Este projeto é parte de um Trabalho de Conclusão de Curso (TCC) e está dispon
 ## 👥 Autores
 
 - **Flávia Alessandra Elugo da Silva** - Desenvolvedora Principal
+- **Gabriella Pereira Morais** - Desenvolvedora 
 - **Instituição**: Instituto Federal de São Paulo (IFSP) - Campus Salto
 
 ## 🤝 Contribuições
@@ -379,6 +380,7 @@ Este é um projeto acadêmico em desenvolvimento. Sugestões e feedback são bem
 ## 📧 Contato
 
 - GitHub: [@FTakElu](https://github.com/FTakElu)
+- GitHub: [@Bagmor](https://github.com/Bagmor).
 
 ---
 
