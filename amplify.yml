@@ -3,10 +3,10 @@ frontend:
   phases:
     preBuild:
       commands:
-        - cd "Desenvolvimento/3.Implementação/DSIM-COD/frontend" && npm ci --legacy-peer-deps
+        - bash -c 'cd "Desenvolvimento/3.Implementação/DSIM-COD/frontend" && npm ci --legacy-peer-deps'
     build:
       commands:
-        - cd "Desenvolvimento/3.Implementação/DSIM-COD/frontend" && npm run build
+        - bash -c 'cd "Desenvolvimento/3.Implementação/DSIM-COD/frontend" && npm run build'
   artifacts:
     baseDirectory: Desenvolvimento/3.Implementação/DSIM-COD/frontend/dist
     files:
