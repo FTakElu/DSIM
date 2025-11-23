@@ -4,12 +4,12 @@ frontend:
     preBuild:
       commands:
         - cd Desenvolvimento/3.Implementação/DSIM-COD/frontend
-        - echo "Instalando dependências do frontend..."
-        - npm ci
+        - node --version
+        - npm --version
+        - npm ci --legacy-peer-deps
     build:
       commands:
         - cd Desenvolvimento/3.Implementação/DSIM-COD/frontend
-        - echo "Compilando TypeScript e construindo o projeto com Vite..."
         - npm run build
   artifacts:
     baseDirectory: Desenvolvimento/3.Implementação/DSIM-COD/frontend/dist
