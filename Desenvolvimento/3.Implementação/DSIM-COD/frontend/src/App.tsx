@@ -7,6 +7,7 @@ import EditPatientPage from "./pages/EditPatientPage";
 import HomePage from "./pages/HomePage";
 import LoginPage from "./pages/LoginPage";
 import PainelListaPacientes from "./pages/PainelListaPacientes";
+import PerfilUsuarioPage from "./pages/PerfilUsuarioPage";
 
 function App() {
 
@@ -15,6 +16,7 @@ function App() {
       <Route path="/" element={<HomePage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/cadastro" element={<CadastroUsuarioPage />} />
+      <Route path="/perfil" element={<PerfilUsuarioPage />} />
       
       <Route path="/pacientes" element={<PainelListaPacientes />} />
       <Route path="/pacientes/adicionar" element={<AddPatientPage />} />

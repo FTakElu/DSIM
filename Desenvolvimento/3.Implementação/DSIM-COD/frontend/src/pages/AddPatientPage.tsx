@@ -59,11 +59,11 @@ const AddPatientPage: React.FC = () => {
       try {
         const response = await api.get('/api/pacientes/devices/available');
         // Usar todos os dispositivos (não apenas os disponíveis) para permitir reatribuição
-        setAvailableDevices(response.data.all || ['Pulseira_DSIM', 'Pulseira_02', 'Pulseira_03']);
+        setAvailableDevices(response.data.all || []);
       } catch (e) {
         console.error('Erro ao buscar dispositivos:', e);
-        // Fallback para lista hardcoded
-        setAvailableDevices(['Pulseira_DSIM', 'Pulseira_02', 'Pulseira_03']);
+        // Se falhar, deixar lista vazia
+        setAvailableDevices([]);
       }
     };
     fetchDevices();
