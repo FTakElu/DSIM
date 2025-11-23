@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import api from '../service/api';
+import theme from '../styles/Theme.module.css';
 import { Pacientes, Vital } from '../Types/PacientesType';
 import styles from './AddPatientPage.module.css'; // Reusa os mesmos estilos
 
@@ -211,7 +212,7 @@ const EditPatientPage: React.FC = () => {
     <div className={styles.pageContainer}>
       <header className={styles.header}>
         <h1>Editar Paciente</h1>
-        <button type="button" onClick={() => navigate('/pacientes')} className={styles.cancelButton}>
+        <button type="button" onClick={() => navigate('/pacientes')} className={`${theme.btn} ${theme.backButton}`}>
           Voltar
         </button>
       </header>
@@ -356,10 +357,10 @@ const EditPatientPage: React.FC = () => {
         </fieldset>
 
         <div className={styles.buttonGroup}>
-          <button type="submit" className={styles.submitButton} disabled={loading}>
+          <button type="submit" className={`${theme.btn} ${theme.primary}`} disabled={loading}>
             {loading ? 'Salvando...' : 'Atualizar Paciente'}
           </button>
-          <button type="button" onClick={() => navigate('/pacientes')} className={styles.cancelButton}>
+          <button type="button" onClick={() => navigate('/pacientes')} className={`${theme.btn} ${theme.ghost}`}>
             Cancelar
           </button>
         </div>

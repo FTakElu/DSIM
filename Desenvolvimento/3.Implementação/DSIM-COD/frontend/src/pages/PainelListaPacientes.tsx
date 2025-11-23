@@ -5,6 +5,7 @@ import logo from "../assets/logo-dsim.png";
 import PatientCard from "../components/PatientCard/PatientCard";
 import UserMenu from "../components/UserMenu/UserMenu";
 import api from '../service/api';
+import theme from "../styles/Theme.module.css";
 import { Pacientes } from "../Types/PacientesType";
 import styles from "./PainelListaPacientes.module.css";
 
@@ -26,7 +27,7 @@ const PatientListHeader = () => {
         <img src={logo} alt="DSIM Logo" className={styles.logoImage} />
       </Link>
       <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
-        <Link to="/pacientes/adicionar" className={styles.addButton}>
+        <Link to="/pacientes/adicionar" className={`${theme.btn} ${theme.outlineLight}`}>
           Adicionar Paciente
         </Link>
         <UserMenu userName={userName} />

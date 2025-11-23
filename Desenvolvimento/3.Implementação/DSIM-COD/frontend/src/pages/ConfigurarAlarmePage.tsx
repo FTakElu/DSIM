@@ -1,16 +1,22 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { FaArrowLeft } from 'react-icons/fa';
+import { Link, useNavigate, useParams } from 'react-router-dom';
+import logoImage from '../assets/logo-dsim.png';
 import PageShell from '../components/PageShell';
-import api from '../service/api'; 
+import api from '../service/api';
 import theme from '../styles/Theme.module.css';
-import styles from './DetalhesPacientePage.module.css'; 
-import logoImage from '../assets/logo-dsim.png'; 
+import styles from './DetalhesPacientePage.module.css';
 
-const ConfigHeader: React.FC = () => (
+const ConfigHeader: React.FC<{ onBack: () => void }> = ({ onBack }) => (
   <header className={styles.header}>
-    <Link to="/pacientes">
-      <img src={logoImage} alt="DSIM Logo" className={styles.logoImage} />
-    </Link>
+    <div className={styles.headerLeft}>
+      <button onClick={onBack} className={`${theme.btn} ${theme.backButton}`}>
+        <FaArrowLeft /> Voltar
+      </button>
+      <Link to="/pacientes">
+        <img src={logoImage} alt="DSIM Logo" className={styles.logoImage} />
+      </Link>
+    </div>
   </header>
 );
 
@@ -71,7 +77,7 @@ const ConfigurarAlarmePage: React.FC = () => {
 
   return (
     <>
-    <ConfigHeader />
+    <ConfigHeader onBack={() => navigate(`/pacientes/${pacienteId}`)} />
     <PageShell title="Configurar Alarme (MEWS)" subtitle="Defina limites para alertas de sinais vitais">
       <div className={theme.card} style={{ maxWidth: 700, margin: '0 auto' }}>
         <div className={theme.field}>

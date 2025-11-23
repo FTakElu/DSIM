@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../service/api';
+import theme from '../styles/Theme.module.css';
 import { Pacientes, Vital } from '../Types/PacientesType';
 import styles from './AddPatientPage.module.css';
 
@@ -281,10 +282,10 @@ const AddPatientPage: React.FC = () => {
         </fieldset>
         
         <div className={styles.buttonGroup}>
-          <button type="submit" className={styles.submitButton} disabled={loading}>
+          <button type="submit" className={`${theme.btn} ${theme.primary}`} disabled={loading}>
             {loading ? 'Cadastrando...' : 'Cadastrar Paciente'}
           </button>
-          <button type="button" onClick={() => navigate('/pacientes')} className={styles.cancelButton}>
+          <button type="button" onClick={() => navigate('/pacientes')} className={`${theme.btn} ${theme.ghost}`}>
             Cancelar
           </button>
         </div>

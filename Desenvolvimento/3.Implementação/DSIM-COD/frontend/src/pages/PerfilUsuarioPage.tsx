@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import api from '../service/api';
+import theme from '../styles/Theme.module.css';
 import styles from './PerfilUsuarioPage.module.css';
 
 export default function PerfilUsuarioPage() {
@@ -89,7 +90,7 @@ export default function PerfilUsuarioPage() {
     <div className={styles.container}>
       <div className={styles.card}>
         <div className={styles.header}>
-          <Link to="/pacientes" className={styles.backButton}>
+          <Link to="/pacientes" className={`${theme.btn} ${theme.backButton}`}>
             <svg viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
             </svg>
@@ -179,13 +180,13 @@ export default function PerfilUsuarioPage() {
             <button 
               type="button" 
               onClick={() => navigate('/pacientes')}
-              className={styles.cancelButton}
+              className={`${theme.btn} ${theme.ghost}`}
             >
               Cancelar
             </button>
             <button 
               type="submit" 
-              className={styles.saveButton}
+              className={`${theme.btn} ${theme.primary}`}
               disabled={loading}
             >
               {loading ? 'Salvando...' : 'Salvar Alterações'}

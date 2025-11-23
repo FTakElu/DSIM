@@ -7,6 +7,7 @@ import AlarmesPaciente from '../components/Alarme/AlarmesPaciente';
 import HistoricoPaciente from '../components/Historico/HistoricoPaciente';
 import api from '../service/api';
 import { AlarmeConfig } from '../service/mockData';
+import theme from '../styles/Theme.module.css';
 import { Pacientes } from '../Types/PacientesType';
 import styles from './DetalhesPacientePage.module.css';
 
@@ -41,7 +42,7 @@ const DetailHeader: React.FC<DetailHeaderProps> = ({ pacienteId }) => {
   return (
     <header className={styles.header}>
       <div className={styles.headerLeft}>
-        <button onClick={() => navigate('/pacientes')} className={styles.backButton}>
+        <button onClick={() => navigate('/pacientes')} className={`${theme.btn} ${theme.backButton}`}>
           <FaArrowLeft /> Voltar
         </button>
         <Link to="/pacientes">
@@ -50,7 +51,7 @@ const DetailHeader: React.FC<DetailHeaderProps> = ({ pacienteId }) => {
       </div>
       <Link 
         to={`/pacientes/${pacienteId}/configurar-alarme`} 
-        className={styles.configButton}
+        className={`${theme.btn} ${theme.outline}`}
       >
         Configurar Alarme
       </Link>
