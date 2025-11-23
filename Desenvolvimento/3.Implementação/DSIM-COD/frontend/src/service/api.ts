@@ -4,6 +4,7 @@ import axios, { AxiosError, AxiosResponse, InternalAxiosRequestConfig } from 'ax
 // npm install axios-mock-adapter
 //npm install --save-dev @types/axios-mock-adapter
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:9999';
+export const WS_BASE_URL = import.meta.env.VITE_WS_URL || 'ws://localhost:9999';
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,

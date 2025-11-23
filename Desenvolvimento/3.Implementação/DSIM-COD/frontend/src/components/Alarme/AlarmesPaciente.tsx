@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { FaHeartbeat, FaTemperatureHigh, FaWind } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 import { AlarmeConfig } from '../../service/mockData';
+import { WS_BASE_URL } from '../../service/api';
 import styles from './AlarmesPaciente.module.css';
 
 interface Props {
@@ -15,7 +16,7 @@ const AlarmesPaciente: React.FC<Props> = ({ config, pacienteId }) => {
 
   useEffect(() => {
     // WebSocket para receber alertas de alarmes em tempo real
-    const ws = new WebSocket('ws://localhost:9999');
+    const ws = new WebSocket(WS_BASE_URL);
     
     ws.onopen = () => {
       console.log('WebSocket conectado aos alarmes');

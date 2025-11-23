@@ -4,6 +4,7 @@ import { FaEdit, FaHeartbeat, FaThermometerHalf, FaTint, FaTrash } from 'react-i
 import { Link, useNavigate } from 'react-router-dom';
 import { Pacientes } from '../../Types/PacientesType';
 import { getHeartRateStatus, getOxygenStatus, getStatusClassName, getTemperatureStatus } from '../../utils/vitalStatus';
+import apiClient from '../../service/api';
 import styles from './PatientCard.module.css';
 
 
@@ -23,10 +24,7 @@ const PatientCard: React.FC<PatientCardProps> = ({ patient, onDelete }) => {
   const handleDelete = async () => {
     if (window.confirm(`Tem certeza que deseja excluir o paciente ${patient.nome}?`)) {
       try {
-        const token = localStorage.getItem('token');
-        await axios.delete(`http://localhost:9999/api/pacientes/${patient.id}`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        await apiClient.delete(`/api/pacientes/${patient.id}`);
         alert('Paciente excluído com sucesso!');
         if (onDelete) onDelete(); // Callback para atualizar a lista
       } catch (error) {

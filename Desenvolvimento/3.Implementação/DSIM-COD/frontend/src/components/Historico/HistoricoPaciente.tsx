@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import styles from "./HistoricoPaciente.module.css";
+import { WS_BASE_URL } from "../../service/api";
 //  Bibliotec Recharts. 
 // Instalação: npm install recharts
 import {
@@ -48,7 +49,7 @@ const HistoricoPaciente: React.FC = () => {
 
   useEffect(() => {
     // WebSocket para atualização em tempo real do histórico
-    const ws = new WebSocket('ws://localhost:9999');
+    const ws = new WebSocket(WS_BASE_URL);
     
     ws.onopen = () => {
       console.log('WebSocket conectado ao histórico');
