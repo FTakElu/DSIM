@@ -16,6 +16,7 @@ const LoginPage: React.FC = () => {
       const res = await api.post("/api/auth/login", { email, senha });
       localStorage.setItem("token", res.data.token);
       localStorage.setItem("role", res.data.role);
+      localStorage.setItem("userName", res.data.user?.nome || res.data.nome || email.split('@')[0]);
       // Redireciona conforme cargo
       window.location.href = "/pacientes";
     } catch (e: any) {

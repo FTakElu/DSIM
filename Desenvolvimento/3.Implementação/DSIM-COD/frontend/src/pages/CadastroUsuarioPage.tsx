@@ -1,10 +1,11 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import PageShell from "../components/PageShell";
 import api from "../service/api";
 import theme from "../styles/Theme.module.css";
 
 const CadastroUsuarioPage: React.FC = () => {
+  const navigate = useNavigate();
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
@@ -14,12 +15,21 @@ const CadastroUsuarioPage: React.FC = () => {
     setMsg("");
     try {
       await api.post("/api/auth/register", { nome, email, senha });
-      setMsg("Usuário cadastrado! Você já pode fazer login.");
-      setNome("");
-      setEmail("");
-      setSenha("");
+      setMsg("Usuário cadastrado com sucesso! Redirecionando para login...");
+      
+      // Redirecionar para login após 2 segundos
+      setTimeout(() => {
+        navigate("/login");
+      }, 2000);
     } catch (e: any) {
-      setMsg("Erro ao cadastrar: " + (e.response?.data?.message || e.message));
+      const errorMsg = e.response?.data?.message || e.message;
+      
+      // Verificar se usuário já existe
+      if (errorMsg.includes("já existe") || errorMsg.includes("already exists")) {
+        setMsg("Este email já está cadastrado. Faça login!");
+      } else {
+        setMsg("Erro ao cadastrar: " + errorMsg);
+      }
     }
   };
 

@@ -1,7 +1,7 @@
 
 
 import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import logo from "../assets/logo-dsim.png";
 import PatientCard from "../components/PatientCard/PatientCard";
 import api from '../service/api';
@@ -17,16 +17,46 @@ import styles from "./PainelListaPacientes.module.css";
   ou para a página de adicionar um novo paciente.
 */
 
-const PatientListHeader = () => (
-  <header className={styles.header}>
-    <Link to="/">
-      <img src={logo} alt="DSIM Logo" className={styles.logoImage} />
-    </Link>
-    <Link to="/pacientes/adicionar" className={styles.addButton}>
-      Adicionar
-    </Link>
-  </header>
-);
+const PatientListHeader = () => {
+  const navigate = useNavigate();
+  const userName = localStorage.getItem('userName') || 'Usuário';
+
+  const handleLogout = () => {
+    if (window.confirm('Deseja realmente sair?')) {
+      localStorage.removeItem('token');
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('userName');
+      navigate('/login');
+    }
+  };
+
+  return (
+    <header className={styles.header}>
+      <Link to="/">
+        <img src={logo} alt="DSIM Logo" className={styles.logoImage} />
+      </Link>
+      <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+        <span style={{ marginRight: '10px', color: '#666' }}>Olá, {userName}</span>
+        <Link to="/pacientes/adicionar" className={styles.addButton}>
+          Adicionar Paciente
+        </Link>
+        <button 
+          onClick={handleLogout}
+          style={{
+            padding: '8px 16px',
+            backgroundColor: '#dc3545',
+            color: 'white',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: 'pointer'
+          }}
+        >
+          Sair
+        </button>
+      </div>
+    </header>
+  );
+};
 
 const PainelListaPacientes: React.FC = () => {
 
