@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { FaHeartbeat, FaTemperatureHigh, FaWind } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 import { AlarmeConfig } from '../../service/mockData';
-import { WS_BASE_URL } from '../../service/api';
 import styles from './AlarmesPaciente.module.css';
 
 interface Props {
@@ -15,51 +14,51 @@ const AlarmesPaciente: React.FC<Props> = ({ config, pacienteId }) => {
   const [ultimoAlerta, setUltimoAlerta] = useState<string | null>(null);
 
   useEffect(() => {
-    // WebSocket para receber alertas de alarmes em tempo real
-    const ws = new WebSocket(WS_BASE_URL);
+    // TODO: WebSocket desabilitado temporariamente até configurar SSL/WSS
+    // const ws = new WebSocket(WS_BASE_URL);
     
-    ws.onopen = () => {
-      console.log('WebSocket conectado aos alarmes');
-    };
+    // ws.onopen = () => {
+    //   console.log('WebSocket conectado aos alarmes');
+    // };
 
-    ws.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      console.log('Alarme recebido via WebSocket:', data);
+    // ws.onmessage = (event) => {
+    //   const data = JSON.parse(event.data);
+    //   console.log('Alarme recebido via WebSocket:', data);
       
-      // Quando um alarme for disparado
-      if (data.type === 'alarm-triggered' && data.pacienteId === pacienteId) {
-        setAlarmesAtivos(prev => {
-          if (!prev.includes(data.alarmType)) {
-            return [...prev, data.alarmType];
-          }
-          return prev;
-        });
+    //   // Quando um alarme for disparado
+    //   if (data.type === 'alarm-triggered' && data.pacienteId === pacienteId) {
+    //     setAlarmesAtivos(prev => {
+    //       if (!prev.includes(data.alarmType)) {
+    //         return [...prev, data.alarmType];
+    //       }
+    //       return prev;
+    //     });
         
-        setUltimoAlerta(data.message || 'Alarme disparado');
+    //     setUltimoAlerta(data.message || 'Alarme disparado');
         
-        // Remove o alerta da lista após 5 segundos
-        setTimeout(() => {
-          setUltimoAlerta(null);
-        }, 5000);
-      }
+    //     // Remove o alerta da lista após 5 segundos
+    //     setTimeout(() => {
+    //       setUltimoAlerta(null);
+    //     }, 5000);
+    //   }
 
-      // Quando um alarme for resolvido
-      if (data.type === 'alarm-resolved' && data.pacienteId === pacienteId) {
-        setAlarmesAtivos(prev => prev.filter(a => a !== data.alarmType));
-      }
-    };
+    //   // Quando um alarme for resolvido
+    //   if (data.type === 'alarm-resolved' && data.pacienteId === pacienteId) {
+    //     setAlarmesAtivos(prev => prev.filter(a => a !== data.alarmType));
+    //   }
+    // };
 
-    ws.onerror = (error) => {
-      console.error('Erro no WebSocket dos alarmes:', error);
-    };
+    // ws.onerror = (error) => {
+    //   console.error('Erro no WebSocket dos alarmes:', error);
+    // };
 
-    ws.onclose = () => {
-      console.log('WebSocket dos alarmes desconectado');
-    };
+    // ws.onclose = () => {
+    //   console.log('WebSocket dos alarmes desconectado');
+    // };
 
-    return () => {
-      ws.close();
-    };
+    // return () => {
+    //   ws.close();
+    // };
   }, [pacienteId]);
 
   return (

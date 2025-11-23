@@ -1,10 +1,9 @@
-import axios from 'axios';
 import React from 'react';
 import { FaEdit, FaHeartbeat, FaThermometerHalf, FaTint, FaTrash } from 'react-icons/fa';
 import { Link, useNavigate } from 'react-router-dom';
+import apiClient from '../../service/api';
 import { Pacientes } from '../../Types/PacientesType';
 import { getHeartRateStatus, getOxygenStatus, getStatusClassName, getTemperatureStatus } from '../../utils/vitalStatus';
-import apiClient from '../../service/api';
 import styles from './PatientCard.module.css';
 
 

@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import logo from "../assets/logo-dsim.png";
 import PatientCard from "../components/PatientCard/PatientCard";
-import api, { WS_BASE_URL } from '../service/api';
+import api from '../service/api';
 import { Pacientes } from "../Types/PacientesType";
 import styles from "./PainelListaPacientes.module.css";
 
@@ -37,8 +37,8 @@ const PainelListaPacientes: React.FC = () => {
   useEffect(() => {
     fetchPacientes(); 
 
-    // WebSocket para atualização em tempo real
-    const ws = new WebSocket(WS_BASE_URL);
+    // TODO: WebSocket desabilitado temporariamente até configurar SSL/WSS
+    /* const ws = new WebSocket(WS_BASE_URL);
     
     ws.onopen = () => {
       console.log('WebSocket conectado ao painel de pacientes');
@@ -65,7 +65,7 @@ const PainelListaPacientes: React.FC = () => {
     // Cleanup: fecha o WebSocket ao desmontar o componente
     return () => {
       ws.close();
-    };
+    }; */
   }, []); 
 
   const fetchPacientes = async () => {

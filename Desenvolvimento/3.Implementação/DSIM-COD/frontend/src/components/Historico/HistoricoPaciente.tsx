@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import styles from "./HistoricoPaciente.module.css";
-import { WS_BASE_URL } from "../../service/api";
 //  Bibliotec Recharts. 
 // Instalação: npm install recharts
 import {
@@ -48,8 +47,8 @@ const HistoricoPaciente: React.FC = () => {
   const [eventos, setEventos] = useState(dadosExemploLista);
 
   useEffect(() => {
-    // WebSocket para atualização em tempo real do histórico
-    const ws = new WebSocket(WS_BASE_URL);
+    // TODO: WebSocket desabilitado temporariamente até configurar SSL/WSS
+    /* const ws = new WebSocket(WS_BASE_URL);
     
     ws.onopen = () => {
       console.log('WebSocket conectado ao histórico');
@@ -98,7 +97,7 @@ const HistoricoPaciente: React.FC = () => {
 
     return () => {
       ws.close();
-    };
+    }; */
   }, []);
 
   return (
