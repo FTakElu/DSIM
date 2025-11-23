@@ -47,12 +47,18 @@ const router = Router();
 // Todas as rotas de pacientes requerem autenticação
 router.use(authMiddleware);
 
-// Listar todos os pacientes
+// Listar todos os pacientes (filtrado por usuário)
 router.get('/', async (req: AuthRequest, res: Response): Promise<void> => {
   try {
+    const userId = req.userId; // ID do usuário autenticado
+
     const result = await dynamoDB.send(
       new ScanCommand({
         TableName: TABLES.PATIENTS,
+        FilterExpression: 'userId = :userId',
+        ExpressionAttributeValues: {
+          ':userId': userId,
+        },
       })
     );
 
@@ -124,10 +130,12 @@ router.get('/devices/available', async (req: AuthRequest, res: Response): Promis
 router.post('/', async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const patientData = req.body;
+    const userId = req.userId; // ID do usuário autenticado
 
     const newPatient: Patient = {
       id: uuidv4(),
       ...patientData,
+      userId, // Associar paciente ao usuário
       vitals: patientData.vitals || {
         oxigenio: { value: 98, status: 'stable' },
         temperatura: { value: 36.5, status: 'stable' },
@@ -165,7 +173,7 @@ router.put('/:id', async (req: AuthRequest, res: Response): Promise<void> => {
     const { id } = req.params;
     const updates = req.body;
 
-    // Verificar se paciente existe
+    // Verificar se paciente existe e pertence ao usuário
     const existing = await dynamoDB.send(
       new GetCommand({
         TableName: TABLES.PATIENTS,
@@ -175,6 +183,12 @@ router.put('/:id', async (req: AuthRequest, res: Response): Promise<void> => {
 
     if (!existing.Item) {
       res.status(404).json({ message: 'Paciente não encontrado' });
+      return;
+    }
+
+    // Verificar se o paciente pertence ao usuário autenticado
+    if (existing.Item.userId !== req.userId) {
+      res.status(403).json({ message: 'Você não tem permissão para editar este paciente' });
       return;
     }
 
@@ -235,7 +249,7 @@ router.delete(
     try {
       const { id } = req.params;
 
-      // Verificar se paciente existe
+      // Verificar se paciente existe e pertence ao usuário
       const existing = await dynamoDB.send(
         new GetCommand({
           TableName: TABLES.PATIENTS,
@@ -245,6 +259,12 @@ router.delete(
 
       if (!existing.Item) {
         res.status(404).json({ message: 'Paciente não encontrado' });
+        return;
+      }
+
+      // Verificar se o paciente pertence ao usuário autenticado
+      if (existing.Item.userId !== req.userId) {
+        res.status(403).json({ message: 'Você não tem permissão para deletar este paciente' });
         return;
       }
 
