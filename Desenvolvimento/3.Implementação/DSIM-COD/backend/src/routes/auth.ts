@@ -117,4 +117,125 @@ router.post('/login', async (req: Request, res: Response): Promise<void> => {
   }
 });
 
+// Atualizar perfil do usuário
+router.put('/perfil', authMiddleware, async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const userId = req.userId;
+    const { nome, email, senhaAtual, novaSenha } = req.body;
+
+    if (!nome || !email) {
+      res.status(400).json({ message: 'Nome e email são obrigatórios' });
+      return;
+    }
+
+    // Buscar usuário atual
+    const result = await dynamoDB.send(
+      new GetCommand({
+        TableName: TABLES.USERS,
+        Key: { email: req.userEmail }, // Email atual do token
+      })
+    );
+
+    const user = result.Item as User | undefined;
+
+    if (!user) {
+      res.status(404).json({ message: 'Usuário não encontrado' });
+      return;
+    }
+
+    // Se está mudando email, verificar se novo email já existe
+    if (email !== req.userEmail) {
+      const existingUser = await dynamoDB.send(
+        new GetCommand({
+          TableName: TABLES.USERS,
+          Key: { email },
+        })
+      );
+
+      if (existingUser.Item) {
+        res.status(400).json({ message: 'Email já está em uso' });
+        return;
+      }
+    }
+
+    // Se está mudando senha, validar senha atual
+    let hashedNewPassword: string | undefined;
+    if (novaSenha) {
+      if (!senhaAtual) {
+        res.status(400).json({ message: 'Senha atual é obrigatória para alterar a senha' });
+        return;
+      }
+
+      const isValidPassword = await bcrypt.compare(senhaAtual, user.senha);
+      if (!isValidPassword) {
+        res.status(401).json({ message: 'Senha atual incorreta' });
+        return;
+      }
+
+      if (novaSenha.length < 6) {
+        res.status(400).json({ message: 'Nova senha deve ter pelo menos 6 caracteres' });
+        return;
+      }
+
+      hashedNewPassword = await bcrypt.hash(novaSenha, 10);
+    }
+
+    // Se email mudou, deletar registro antigo e criar novo (pois email é a chave)
+    if (email !== req.userEmail) {
+      // Criar novo registro com email atualizado
+      const updatedUser: User = {
+        ...user,
+        nome,
+        email,
+        senha: hashedNewPassword || user.senha,
+        updatedAt: Date.now(),
+      };
+
+      await dynamoDB.send(
+        new PutCommand({
+          TableName: TABLES.USERS,
+          Item: updatedUser,
+        })
+      );
+
+      // TODO: Deletar registro antigo (requer scan ou GSI)
+      // Por enquanto, manter ambos registros
+    } else {
+      // Atualizar registro existente
+      const updateExpression: string[] = ['#nome = :nome'];
+      const expressionAttributeNames: Record<string, string> = { '#nome': 'nome' };
+      const expressionAttributeValues: Record<string, any> = { ':nome': nome };
+
+      if (hashedNewPassword) {
+        updateExpression.push('#senha = :senha');
+        expressionAttributeNames['#senha'] = 'senha';
+        expressionAttributeValues[':senha'] = hashedNewPassword;
+      }
+
+      updateExpression.push('#updatedAt = :updatedAt');
+      expressionAttributeNames['#updatedAt'] = 'updatedAt';
+      expressionAttributeValues[':updatedAt'] = Date.now();
+
+      await dynamoDB.send(
+        new UpdateCommand({
+          TableName: TABLES.USERS,
+          Key: { email },
+          UpdateExpression: `SET ${updateExpression.join(', ')}`,
+          ExpressionAttributeNames: expressionAttributeNames,
+          ExpressionAttributeValues: expressionAttributeValues,
+        })
+      );
+    }
+
+    res.json({
+      message: 'Perfil atualizado com sucesso',
+      nome,
+      email,
+    });
+  } catch (error) {
+    console.error('Erro ao atualizar perfil:', error);
+    res.status(500).json({ message: 'Erro ao atualizar perfil' });
+  }
+});
+
 export default router;

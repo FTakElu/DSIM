@@ -1,8 +1,10 @@
-import { Response, NextFunction } from 'express';
+import { NextFunction, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import { AuthRequest } from '../types';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'fallback_secret_key';
+
+export { AuthRequest };
 
 export const authMiddleware = (
   req: AuthRequest,
@@ -20,10 +22,12 @@ export const authMiddleware = (
     const token = authHeader.substring(7);
     const decoded = jwt.verify(token, JWT_SECRET) as {
       userId: string;
+      email: string;
       role: string;
     };
 
     req.userId = decoded.userId;
+    req.userEmail = decoded.email;
     req.userRole = decoded.role;
 
     next();

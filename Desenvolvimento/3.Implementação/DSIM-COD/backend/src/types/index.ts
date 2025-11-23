@@ -5,6 +5,7 @@ export interface User {
   senha: string;
   role: 'admin' | 'medico' | 'enfermeiro';
   createdAt: number;
+  updatedAt?: number;
 }
 
 export interface Patient {
@@ -66,5 +67,6 @@ import { Request } from 'express';
 
 export interface AuthRequest extends Request {
   userId?: string;
+  userEmail?: string;
   userRole?: string;
 }
