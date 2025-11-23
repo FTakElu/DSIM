@@ -1,3 +1,4 @@
+import { SNSClient, SubscribeCommand } from '@aws-sdk/client-sns';
 import {
     DeleteCommand,
     GetCommand,
@@ -10,6 +11,36 @@ import { v4 as uuidv4 } from 'uuid';
 import { dynamoDB, TABLES } from '../config/aws';
 import { authMiddleware } from '../middleware/auth';
 import { AuthRequest, Patient } from '../types';
+const snsClient = new SNSClient({ region: process.env.AWS_REGION });
+
+async function subscribeResponsavelSNS({ email, telefone }) {
+  // Subscrever email
+  if (email) {
+    try {
+      await snsClient.send(new SubscribeCommand({
+        TopicArn: process.env.SNS_TOPIC_ARN,
+        Protocol: 'email',
+        Endpoint: email
+      }));
+      console.log('Solicitação de subscrição SNS para email enviada:', email);
+    } catch (err) {
+      console.error('Erro ao subscrever email no SNS:', err);
+    }
+  }
+  // Subscrever SMS
+  if (telefone) {
+    try {
+      await snsClient.send(new SubscribeCommand({
+        TopicArn: process.env.SNS_TOPIC_ARN,
+        Protocol: 'sms',
+        Endpoint: telefone
+      }));
+      console.log('Solicitação de subscrição SNS para SMS enviada:', telefone);
+    } catch (err) {
+      console.error('Erro ao subscrever SMS no SNS:', err);
+    }
+  }
+}
 
 const router = Router();
 
@@ -113,6 +144,14 @@ router.post('/', async (req: AuthRequest, res: Response): Promise<void> => {
       })
     );
 
+    // Subscrever responsável no SNS
+    if (newPatient.contatoEmergencia) {
+      await subscribeResponsavelSNS({
+        email: newPatient.contatoEmergencia.email,
+        telefone: newPatient.contatoEmergencia.telefone
+      });
+    }
+
     res.status(201).json(newPatient);
   } catch (error) {
     console.error('Erro ao criar paciente:', error);
@@ -173,6 +212,14 @@ router.put('/:id', async (req: AuthRequest, res: Response): Promise<void> => {
         Key: { id },
       })
     );
+
+    // Subscrever responsável no SNS
+    if (updated.Item && updated.Item.contatoEmergencia) {
+      await subscribeResponsavelSNS({
+        email: updated.Item.contatoEmergencia.email,
+        telefone: updated.Item.contatoEmergencia.telefone
+      });
+    }
 
     res.json(updated.Item);
   } catch (error) {
