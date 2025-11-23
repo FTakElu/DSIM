@@ -8,6 +8,7 @@ frontend:
         - npm ci
     build:
       commands:
+        - cd Desenvolvimento/3.Implementação/DSIM-COD/frontend
         - echo "Compilando TypeScript e construindo o projeto com Vite..."
         - npm run build
   artifacts:
