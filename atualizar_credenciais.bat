@@ -48,12 +48,12 @@ echo    [OK] .env enviado para EC2
 echo.
 
 echo 3. Reiniciando backend no EC2...
-ssh -i "Desenvolvimento/3.Implementação/CERTIFICADOS/dsim_keypair.pem" ec2-user@98.95.251.71 "pm2 restart dsim-backend"
+ssh -i "Desenvolvimento/3.Implementação/CERTIFICADOS/dsim_keypair.pem" ec2-user@98.95.251.71 "pm2 restart dsim-backend --update-env"
 if errorlevel 1 (
     echo    [ERRO] Falha ao reiniciar backend
     goto cleanup
 )
-echo    [OK] Backend reiniciado
+echo    [OK] Backend reiniciado com novas credenciais
 echo.
 
 :cleanup
