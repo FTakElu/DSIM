@@ -1,16 +1,17 @@
 import {
-    ApiGatewayManagementApiClient,
-    PostToConnectionCommand,
+  ApiGatewayManagementApiClient,
+  PostToConnectionCommand,
 } from '@aws-sdk/client-apigatewaymanagementapi';
 import {
-    AttributeValue as DynamoDBAttributeValue,
-    DynamoDBClient,
+  AttributeValue as DynamoDBAttributeValue,
+  DynamoDBClient,
 } from '@aws-sdk/client-dynamodb';
+import { PublishCommand, SNSClient } from '@aws-sdk/client-sns';
 import {
-    DynamoDBDocumentClient,
-    GetCommand,
-    QueryCommand,
-    UpdateCommand,
+  DynamoDBDocumentClient,
+  GetCommand,
+  QueryCommand,
+  UpdateCommand,
 } from '@aws-sdk/lib-dynamodb';
 import { unmarshall } from '@aws-sdk/util-dynamodb';
 import { DynamoDBStreamEvent } from 'aws-lambda';
@@ -18,12 +19,41 @@ import { DynamoDBStreamEvent } from 'aws-lambda';
 // Configuração AWS
 const dynamoClient = new DynamoDBClient({ region: process.env.AWS_REGION });
 const docClient = DynamoDBDocumentClient.from(dynamoClient);
+const snsClient = new SNSClient({ region: process.env.AWS_REGION });
 
 // Cliente WebSocket API Gateway (configurar endpoint)
 const wsClient = new ApiGatewayManagementApiClient({
   region: process.env.AWS_REGION,
   endpoint: process.env.WEBSOCKET_API_ENDPOINT,
 });
+/**
+ * Envia alerta ao responsável via SNS (SMS/email)
+ */
+async function sendResponsavelAlert(responsavel: any, mensagem: string) {
+  // Enviar SMS
+  if (responsavel?.telefone) {
+    try {
+      await snsClient.send(new PublishCommand({
+        Message: mensagem,
+        PhoneNumber: responsavel.telefone // formato +55...
+      }));
+    } catch (err) {
+      console.error('Erro ao enviar SMS via SNS:', err);
+    }
+  }
+  // Enviar Email (se configurado no SNS)
+  if (responsavel?.email && process.env.SNS_TOPIC_ARN) {
+    try {
+      await snsClient.send(new PublishCommand({
+        Message: mensagem,
+        Subject: "Alerta DSIM",
+        TopicArn: process.env.SNS_TOPIC_ARN
+      }));
+    } catch (err) {
+      console.error('Erro ao enviar email via SNS:', err);
+    }
+  }
+}
 
 // Tabelas DynamoDB
 const TABLES = {
@@ -305,7 +335,24 @@ export async function handler(event: DynamoDBStreamEvent) {
       const alarmConfig = await getAlarmConfig(patient.id);
       const alarmCheck = checkAlarms(data, alarmConfig);
 
-      // Enviar alertas se necessário
+      // Disparar alerta de pânico ou queda
+      if (data.panico_ativo === true || data.queda_detectada === true) {
+        const mensagem = data.panico_ativo
+          ? 'Botão de pânico acionado!'
+          : 'Alerta de queda detectada!';
+        const alert = {
+          type: 'event',
+          pacienteId: patient.id,
+          pacienteNome: patient.nome,
+          timestamp: data.timestamp,
+          message: mensagem
+        };
+        console.log('Enviando alerta de evento:', alert);
+        await sendWebSocketAlert(patient.id, alert);
+        await sendResponsavelAlert(patient.contatoEmergencia, `${mensagem} (Paciente: ${patient.nome})`);
+      }
+
+      // Enviar alertas vitais se necessário
       if (alarmCheck.shouldAlert || mews.status !== 'stable') {
         const alert = {
           type: 'vital_alert',
@@ -323,6 +370,10 @@ export async function handler(event: DynamoDBStreamEvent) {
 
         console.log('Enviando alerta:', alert);
         await sendWebSocketAlert(patient.id, alert);
+
+        // Enviar mensagem ao responsável via SNS
+        const mensagem = `Alerta DSIM: ${alarmCheck.alerts.join(', ')} (Paciente: ${patient.nome})`;
+        await sendResponsavelAlert(patient.contatoEmergencia, mensagem);
       }
     } catch (error) {
       console.error('Erro ao processar registro:', error);

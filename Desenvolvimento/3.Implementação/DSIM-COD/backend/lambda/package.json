@@ -8,9 +8,10 @@
     "package": "npm run build && zip -r function.zip dist node_modules"
   },
   "dependencies": {
+    "@aws-sdk/client-apigatewaymanagementapi": "^3.450.0",
     "@aws-sdk/client-dynamodb": "^3.450.0",
-    "@aws-sdk/lib-dynamodb": "^3.450.0",
-    "@aws-sdk/client-apigatewaymanagementapi": "^3.450.0"
+    "@aws-sdk/client-sns": "^3.936.0",
+    "@aws-sdk/lib-dynamodb": "^3.450.0"
   },
   "devDependencies": {
     "@types/aws-lambda": "^8.10.126",
