@@ -1,0 +1,19 @@
+version: 1
+frontend:
+  phases:
+    preBuild:
+      commands:
+        - cd Desenvolvimento/3.Implementação/DSIM-COD/frontend
+        - echo "Instalando dependências do frontend..."
+        - npm ci
+    build:
+      commands:
+        - echo "Compilando TypeScript e construindo o projeto com Vite..."
+        - npm run build
+  artifacts:
+    baseDirectory: Desenvolvimento/3.Implementação/DSIM-COD/frontend/dist
+    files:
+      - '**/*'
+  cache:
+    paths:
+      - Desenvolvimento/3.Implementação/DSIM-COD/frontend/node_modules/**/*
