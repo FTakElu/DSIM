@@ -6,7 +6,7 @@ frontend:
         - bash -c 'cd "Desenvolvimento/3.Implementação/DSIM-COD/frontend" && npm ci --legacy-peer-deps'
     build:
       commands:
-        - bash -c 'cd "Desenvolvimento/3.Implementação/DSIM-COD/frontend" && npm run build'
+        - bash -c 'cd "Desenvolvimento/3.Implementação/DSIM-COD/frontend" && npm run build:prod'
   artifacts:
     baseDirectory: Desenvolvimento/3.Implementação/DSIM-COD/frontend/dist
     files:
