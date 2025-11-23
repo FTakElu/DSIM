@@ -11,6 +11,55 @@ Como parte de um trabalho de conclusão de curso em Ciência da Computação no 
 
 O sistema monitora continuamente sinais vitais, localização e movimento, emitindo alertas automáticos através de seus recursos inteligentes quando necessário. Ao fornecer dados em tempo real tanto para os usuários quanto para seus cuidadores ou familiares, o DSIM promove maior segurança e autonomia, permite respostas mais rápidas em situações críticas e melhora a qualidade geral do atendimento assistido.
 
+## ☁️ Infraestrutura AWS em Produção
+
+O sistema DSIM está hospedado completamente na AWS (Amazon Web Services) com os seguintes recursos ativos:
+
+### Recursos Principais
+
+| Recurso | ID/Identificador | Função |
+|---------|------------------|--------|
+| **EC2 Instance** | `i-0019770d6275005b2` | Servidor rodando backend Node.js com PM2 (t2.micro) |
+| **Elastic IP** | `98.95.251.71` | IP público fixo da EC2 (não muda após reiniciar) |
+| **API Gateway** | `87xx2k2vn5` | HTTP API que faz proxy entre frontend e backend |
+| **Security Group** | `sg-0f38c9d3a91bd3473` | Firewall com portas 22, 80, 443, 9999 abertas |
+| **Lambda Function** | `DSIM-MEWS-Processor` | Calcula score MEWS e processa alarmes automaticamente |
+| **IoT Thing** | `Pulseira_DSIM` | Dispositivo IoT registrado para comunicação MQTT |
+| **Region** | `us-east-1` | Região AWS (Virgínia do Norte) |
+
+### DynamoDB Tables (5 tabelas ativas)
+
+| Tabela | Chave Primária | Função | Recursos Especiais |
+|--------|----------------|--------|-------------------|
+| **DSIM_Users** | `userId` | Armazena usuários do sistema | - |
+| **DSIM_Patients** | `patientId` | Dados dos pacientes monitorados | GSI: `deviceId-index` |
+| **DSIM_SensorData** | `deviceId` + `timestamp` | Histórico de leituras das pulseiras | DynamoDB Stream (trigger Lambda) |
+| **DSIM_Alarms** | `pacienteId` | Configurações de alarmes personalizados | - |
+| **DSIM_Connections** | `connectionId` | Gerencia conexões WebSocket ativas | TTL habilitado |
+
+### Endpoints Ativos
+
+- **Backend (EC2)**: `http://98.95.251.71:9999`
+- **API Gateway**: `https://87xx2k2vn5.execute-api.us-east-1.amazonaws.com`
+- **AWS IoT Endpoint**: `a2cs805qynf1nj-ats.iot.us-east-1.amazonaws.com`
+- **Frontend (Amplify)**: *A configurar*
+
+### 🔑 Gerenciamento de Credenciais (AWS Academy)
+
+O projeto utiliza AWS Academy, que gera **credenciais temporárias com validade de 2-4 horas**. 
+
+Para atualizar as credenciais automaticamente na EC2:
+
+```cmd
+# 1. Atualizar credenciais localmente
+aws configure  # Colar novas credenciais da sessão AWS Academy
+
+# 2. Executar script automático
+update_ec2_credentials.bat  # Atualiza .env na EC2 e reinicia backend
+```
+
+**Arquivo responsável**: `update_ec2_credentials.bat` (raiz do projeto)
+
 ## 🏗️ Arquitetura do Sistema
 
 ```
@@ -96,6 +145,9 @@ O sistema monitora continuamente sinais vitais, localização e movimento, emiti
 ```
 DSIM/
 ├── README.md                                    # Este arquivo
+├── amplify.yml                                  # Configuração de build do AWS Amplify
+├── update_ec2_credentials.bat                   # Script para atualizar credenciais AWS na EC2
+├── GUIA_DEPLOY.md                              # Documentação completa da infraestrutura AWS
 ├── Desenvolvimento/
 │   ├── 1.Requisitos/                           # Especificações do sistema
 │   ├── 2.Analise e Design/                     # Diagramas UML
@@ -169,83 +221,283 @@ DSIM/
     └── Atas/                               # Reuniões do projeto
 ```
 
-## 🛠️ Instalação e Configuração
+## 🛠️ Infraestrutura AWS Implantada
 
-### Pré-requisitos
+### O que foi criado na AWS
 
-- **Node.js 18+** - [Download](https://nodejs.org/)
-- **Git** - [Download](https://git-scm.com/)
-- **AWS Account** - [AWS Academy Learner Lab](https://awsacademy.instructure.com/)
-- **Arduino IDE** - [Download](https://www.arduino.cc/en/software)
-- **ESP8266 Core** - Instalar via Arduino IDE Board Manager
-- **Hardware**:
-  - ESP8266 (NodeMCU ou similar)
-  - Sensor MAX30102 (BPM + SpO2)
-  - Sensor MLX90614 ou DS18B20 (Temperatura)
-  - Botão de pânico
-  - Buzzer
+O projeto DSIM está hospedado na AWS com a seguinte infraestrutura:
 
-### 1. Clonar o Repositório
+#### 🖥️ **Amazon EC2 (Servidor Backend)**
+- **Instância**: `i-0019770d6275005b2`
+- **Tipo**: t2.micro (Free Tier elegível)
+- **IP Fixo (Elastic IP)**: `98.95.251.71`
+- **Sistema Operacional**: Amazon Linux 2023
+- **Função**: Roda o backend Node.js/Express com PM2
+- **Portas abertas**: 22 (SSH), 80 (HTTP), 443 (HTTPS), 9999 (Backend API)
 
-```bash
-git clone https://github.com/FTakElu/DSIM.git
-cd DSIM
+**O que está rodando:**
+- Backend Node.js na porta 9999
+- Gerenciado pelo PM2 (Process Manager) com auto-restart
+- Conecta ao DynamoDB para armazenar dados
+- Recebe dados das pulseiras IoT via AWS IoT Core
+
+#### 🌐 **API Gateway**
+- **ID**: `87xx2k2vn5`
+- **Tipo**: HTTP API
+- **URL Pública**: `https://87xx2k2vn5.execute-api.us-east-1.amazonaws.com`
+- **Função**: Atua como proxy entre o frontend e o backend EC2
+- **Integração**: Redireciona todas as requisições para `http://98.95.251.71:9999`
+- **CORS**: Configurado para aceitar requisições do frontend
+- **Auto-deploy**: Habilitado (mudanças são aplicadas automaticamente)
+
+#### 🗄️ **DynamoDB (Banco de Dados)**
+- **Região**: us-east-1 (Virgínia do Norte)
+- **Modo de cobrança**: On-Demand (paga apenas pelo que usa)
+- **Tabelas criadas** (5 no total):
+
+1. **DSIM_Users**
+   - Armazena usuários do sistema (médicos, enfermeiros)
+   - Chave primária: `userId`
+
+2. **DSIM_Patients**
+   - Dados dos pacientes monitorados
+   - Chave primária: `patientId`
+   - Inclui: nome, dados vitais, histórico médico, device vinculado
+
+3. **DSIM_SensorData**
+   - Leituras das pulseiras IoT
+   - Chave primária: `deviceId` + `timestamp`
+   - DynamoDB Stream habilitado (dispara Lambda)
+
+4. **DSIM_Alarms**
+   - Configurações de alarmes personalizados por paciente
+   - Chave primária: `pacienteId`
+
+5. **DSIM_Connections**
+   - Gerencia conexões WebSocket ativas
+   - Chave primária: `connectionId`
+
+#### ⚡ **AWS Lambda**
+- **Função**: `DSIM-MEWS-Processor`
+- **Runtime**: Node.js 18.x
+- **Trigger**: DynamoDB Stream da tabela `DSIM_SensorData`
+- **Função**: 
+  - Processa dados de sensores em tempo real
+  - Calcula score MEWS (Modified Early Warning Score)
+  - Verifica limites de alarmes
+  - Envia alertas via WebSocket quando necessário
+
+#### 📡 **AWS IoT Core**
+- **Thing Name**: `Pulseira_DSIM`
+- **Endpoint**: `a2cs805qynf1nj-ats.iot.us-east-1.amazonaws.com`
+- **Protocolo**: MQTT com TLS 1.2
+- **Tópicos**:
+  - Publicação: `pulseira/dados` (pulseira envia dados)
+  - Comandos: `pulseira/comandos` (backend envia comandos)
+- **Regra IoT**: `DadosPulseiraToDynamoDB` (insere dados no DynamoDB automaticamente)
+
+#### 🔒 **Security Group**
+- **ID**: `sg-0f38c9d3a91bd3473`
+- **Nome**: `dsim-sg`
+- **Regras de entrada**:
+  - Porta 22 (SSH): Para acesso administrativo
+  - Porta 80 (HTTP): Para tráfego web
+  - Porta 443 (HTTPS): Para tráfego seguro
+  - Porta 9999 (Custom TCP): Para o backend Node.js
+
+#### 🌍 **AWS Amplify** (Frontend)
+- **Função**: Hospedagem do frontend React
+- **Deploy**: Automático a cada push no GitHub (branch `main`)
+- **Build**: Vite compila o React TypeScript
+- **Variável de ambiente**: `VITE_API_URL` aponta para o API Gateway
+
+---
+
+## 🔑 Gerenciamento de Credenciais AWS Academy
+
+### ⚠️ Problema: Credenciais Temporárias
+
+Contas AWS Academy geram credenciais que **expiram a cada 2-4 horas**. Quando isso acontece:
+- Backend perde acesso ao DynamoDB
+- Sistema para de funcionar
+- Precisa atualizar as credenciais na EC2
+
+### ✅ Solução: Script Automático
+
+O projeto inclui um script que **atualiza automaticamente** as credenciais AWS na EC2.
+
+**Arquivo**: `update_ec2_credentials.bat` (raiz do projeto)
+
+**O que o script faz:**
+1. Lê suas credenciais AWS do arquivo local `~/.aws/credentials`
+2. Conecta via SSH na instância EC2 (`98.95.251.71`)
+3. Atualiza o arquivo `.env` do backend com as novas credenciais
+4. Reinicia o backend automaticamente
+5. Tudo em menos de 10 segundos!
+
+**Quando usar:**
+```cmd
+# Quando iniciar nova sessão AWS Academy:
+1. aws configure  # Colar novas credenciais da AWS Academy
+
+2. update_ec2_credentials.bat  # Atualizar na EC2 automaticamente
 ```
 
-### 2. Configurar Backend
+---
+
+## 🚀 Como o Sistema Funciona
+
+### Fluxo Completo de Dados
+
+```
+1. Pulseira IoT (ESP8266)
+   └─> Coleta sinais vitais (BPM, SpO2, Temperatura)
+   └─> Publica via MQTT/TLS no tópico "pulseira/dados"
+        ↓
+2. AWS IoT Core
+   └─> Recebe mensagem MQTT
+   └─> Regra IoT adiciona timestamp
+   └─> Insere no DynamoDB (tabela SensorData)
+        ↓
+3. DynamoDB Stream
+   └─> Dispara Lambda automaticamente
+        ↓
+4. Lambda Function (DSIM-MEWS-Processor)
+   └─> Calcula score MEWS
+   └─> Verifica alarmes configurados
+   └─> Atualiza tabela Patients
+   └─> Envia alerta via WebSocket (se necessário)
+        ↓
+5. Backend API (EC2)
+   └─> Serve dados via API REST
+   └─> Mantém conexões WebSocket
+        ↓
+6. API Gateway
+   └─> Faz proxy das requisições
+   └─> Frontend ←→ Backend
+        ↓
+7. Frontend (Amplify)
+   └─> Exibe dados em tempo real
+   └─> Atualiza interface automaticamente
+```
+
+---
+
+## 💻 Desenvolvimento Local (Opcional)
+
+Se quiser rodar o sistema localmente para testes ou desenvolvimento:
+
+### Backend Local
 
 ```bash
 cd "Desenvolvimento/3.Implementação/DSIM-COD/backend"
-
-# Instalar dependências
 npm install
 
 # Criar arquivo .env com suas credenciais AWS
-# (Veja backend/README.md para detalhes)
+# (Ver backend/README.md para detalhes)
 
-# Criar tabelas DynamoDB
-# (Execute via AWS Console ou script setup-dynamodb.bat)
-
-# Iniciar servidor
-npm run dev
+npm run dev  # Roda na porta 9999
 ```
 
-Servidor disponível em: **http://localhost:9999**
-
-### 3. Configurar Frontend
+### Frontend Local
 
 ```bash
 cd "Desenvolvimento/3.Implementação/DSIM-COD/frontend"
-
-# Instalar dependências
 npm install
 
-# Iniciar servidor de desenvolvimento
-npm run dev
+# Configurar URL da API em src/service/api.ts
+# Para usar backend de produção:
+# baseURL: 'https://87xx2k2vn5.execute-api.us-east-1.amazonaws.com'
+
+npm run dev  # Roda na porta 5173
 ```
 
-Aplicação disponível em: **http://localhost:5173**
-
-### 4. Configurar Pulseira IoT
+### Pulseira IoT (Arduino/ESP8266)
 
 1. Abra `Desenvolvimento/3.Implementação/DSIM-INO/PulseiraMonitoramentoPT1.ino` no Arduino IDE
-2. Configure WiFi (linhas 8-9)
-3. Os certificados AWS já estão incluídos no código
-4. Compile e envie para o ESP8266
-5. Abra o Serial Monitor (115200 baud) para verificar conexão
+2. Configure seu WiFi (linhas 8-9)
+3. Os certificados AWS já estão no código
+4. Compile e faça upload para o ESP8266
+5. Abra o Serial Monitor (115200 baud) para ver os dados sendo enviados
 
-Veja `DSIM-INO/README.md` para instruções detalhadas.
+Detalhes completos em: `DSIM-INO/README.md`
 
-### 5. Configurar AWS IoT Core
+---
 
-**Via Console AWS:**
+## 🧪 Como Testar o Sistema
 
-1. Acesse **IoT Core** → **Settings** → Copie o endpoint
-2. **Manage** → **Things** → Verifique `Pulseira_DSIM`
-3. **Message routing** → **Rules** → Verifique `DadosPulseiraToDynamoDB`
-4. **Test** → **MQTT test client** → Subscribe `pulseira/dados` para ver dados chegando
+### 1. Testar Backend (Produção)
+
+```bash
+# Via API Gateway (recomendado)
+curl https://87xx2k2vn5.execute-api.us-east-1.amazonaws.com/health
+
+# Direto na EC2
+curl http://98.95.251.71:9999/health
+
+# Resposta esperada:
+# {"status":"OK","timestamp":"2025-11-23T..."}
+```
+
+### 2. Testar Conexão com DynamoDB
+
+```bash
+# Listar pacientes
+curl https://87xx2k2vn5.execute-api.us-east-1.amazonaws.com/api/pacientes \
+  -H "Authorization: Bearer SEU_TOKEN_JWT"
+
+# Ver dados de sensores
+aws dynamodb scan --table-name DSIM_SensorData --region us-east-1 --max-items 5
+```
+
+### 3. Testar IoT → DynamoDB
+
+Publique uma mensagem no AWS IoT Console:
+
+**Topic**: `pulseira/dados`
+
+**Payload**:
+```json
+{
+  "deviceId": "Pulseira_DSIM",
+  "batimentos": 75,
+  "oxigenio": 98,
+  "temperatura": 36.5,
+  "panico_ativo": false
+}
+```
+
+Verifique se os dados aparecem no DynamoDB (tabela `DSIM_SensorData`).
+
+---
+
+## 📚 Documentação Detalhada
+
+Cada componente tem sua própria documentação completa:
+
+- **Backend**: `Desenvolvimento/3.Implementação/DSIM-COD/backend/README.md`
+- **Frontend**: `Desenvolvimento/3.Implementação/DSIM-COD/frontend/README.md`
+- **Lambda**: `Desenvolvimento/3.Implementação/DSIM-COD/backend/lambda/README.md`
+- **Pulseira IoT**: `Desenvolvimento/3.Implementação/DSIM-INO/README.md`
+- **Guia de Deploy**: `GUIA_DEPLOY.md`
 
 ## 🧪 Testando o Sistema
+
+### Script de Gerenciamento AWS
+
+O projeto inclui um script essencial para gerenciar as credenciais AWS Academy:
+
+| Script | Descrição |
+|--------|-----------|
+| `update_ec2_credentials.bat` | Atualiza automaticamente as credenciais AWS na EC2 quando sessão AWS Academy expira |
+
+**Como usar:**
+
+```cmd
+# Quando iniciar nova sessão AWS Academy (a cada 2-4h):
+aws configure  # Colar novas credenciais da AWS Academy
+update_ec2_credentials.bat  # Atualizar automaticamente na EC2
+```
 
 ### 1. Backend
 

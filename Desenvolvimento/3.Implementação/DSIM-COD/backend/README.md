@@ -2,7 +2,37 @@
 
 Backend do sistema DSIM de monitoramento de pacientes usando IoT, Node.js/Express e AWS.
 
-## 🏗️ Arquitetura
+## � Infraestrutura Implantada
+
+### Recursos AWS (Produção)
+
+| Recurso | Identificador | Status |
+|---------|---------------|--------|
+| **EC2 Instance** | `i-0019770d6275005b2` | ✅ Rodando |
+| **Elastic IP** | `98.95.251.71` | ✅ Fixo (não muda) |
+| **API Gateway** | `87xx2k2vn5` | ✅ Ativo |
+| **API URL** | `https://87xx2k2vn5.execute-api.us-east-1.amazonaws.com` | ✅ Público |
+| **Security Group** | `sg-0f38c9d3a91bd3473` | Portas: 22, 80, 443, 9999 |
+| **Backend (Direto)** | `http://98.95.251.71:9999` | ✅ Acessível |
+| **Process Manager** | PM2 (daemon `dsim-backend`) | ✅ Auto-restart |
+
+### DynamoDB Tables (us-east-1)
+
+- `DSIM_Users` - Usuários do sistema
+- `DSIM_Patients` - Dados dos pacientes
+- `DSIM_SensorData` - Leituras das pulseiras IoT (com Stream)
+- `DSIM_Alarms` - Configurações de alarmes
+- `DSIM_Connections` - Conexões WebSocket ativas
+
+### Lambda Function
+
+- **Nome**: `DSIM-MEWS-Processor`
+- **Trigger**: DynamoDB Stream (DSIM_SensorData)
+- **Função**: Calcular MEWS e enviar alertas
+
+---
+
+## �🏗️ Arquitetura
 
 ```
 ┌──────────────┐       ┌──────────────┐       ┌──────────────┐
@@ -80,6 +110,47 @@ backend/
 
 ## 🚀 Início Rápido
 
+### Opção 1: Usar Backend na EC2 (Recomendado - Já Implantado)
+
+O backend já está rodando na EC2 com IP fixo `98.95.251.71`.
+
+**Atualizar credenciais AWS (a cada 2-4h):**
+
+```cmd
+# No Windows (raiz do projeto):
+aws configure  # Colar novas credenciais AWS Academy
+update_ec2_credentials.bat  # Atualiza automaticamente na EC2
+```
+
+**Verificar status:**
+
+```cmd
+# Testar backend direto
+curl http://98.95.251.71:9999/health
+
+# Testar via API Gateway
+curl https://87xx2k2vn5.execute-api.us-east-1.amazonaws.com/health
+```
+
+**Acessar EC2 via SSH:**
+
+```cmd
+ssh -i "../../CERTIFICADOS/dsim_keypair.pem" ec2-user@98.95.251.71
+
+# Ver logs
+pm2 logs dsim-backend
+
+# Reiniciar
+pm2 restart dsim-backend
+
+# Status
+pm2 status
+```
+
+### Opção 2: Desenvolvimento Local
+
+Para rodar backend localmente (ex: testes, desenvolvimento):
+
 ### 1. Instalar Dependências
 
 ```bash
@@ -117,18 +188,15 @@ DYNAMODB_CONNECTIONS_TABLE=DSIM_Connections
 
 ### 3. Criar Tabelas DynamoDB
 
-**Linux/Mac:**
-```bash
-chmod +x scripts/setup-dynamodb.sh
-./scripts/setup-dynamodb.sh
-```
+**⚠️ Importante:** As tabelas DynamoDB já foram criadas na AWS.
 
-**Windows:**
-```bash
-scripts\setup-dynamodb.bat
-```
+Caso precise recriá-las, consulte `DEPLOYMENT_GUIDE.md` para os comandos AWS CLI ou use o Console AWS:
 
-Ou consulte `DEPLOYMENT_GUIDE.md` para criação manual via Console AWS.
+- DSIM_Users
+- DSIM_Patients
+- DSIM_SensorData (com Stream habilitado)
+- DSIM_Alarms
+- DSIM_Connections (com TTL configurado)
 
 ### 4. Compilar TypeScript
 

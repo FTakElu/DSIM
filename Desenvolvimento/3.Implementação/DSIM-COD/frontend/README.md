@@ -2,6 +2,62 @@
 
 Interface web para monitoramento em tempo real de sinais vitais de pacientes através de pulseiras IoT.
 
+## 🚀 Deploy em Produção
+
+### AWS Amplify (Configurado)
+
+O frontend está pronto para deploy no AWS Amplify conectado ao GitHub.
+
+**Configurações da infraestrutura:**
+
+| Configuração | Valor |
+|--------------|-------|
+| **Repositório** | `FTakElu/DSIM` |
+| **Branch** | `main` |
+| **Arquivo de Build** | `amplify.yml` (raiz do repositório) |
+| **Output Directory** | `dist` |
+| **API Backend** | `https://87xx2k2vn5.execute-api.us-east-1.amazonaws.com` |
+
+**Variável de ambiente necessária no Amplify:**
+
+```env
+VITE_API_URL=https://87xx2k2vn5.execute-api.us-east-1.amazonaws.com
+```
+
+### Como Fazer o Deploy
+
+**1. Acessar Console AWS Amplify:**
+   - URL: https://console.aws.amazon.com/amplify/
+
+**2. Criar Nova Aplicação:**
+   - Clique em **"New app"** → **"Host web app"**
+   - Escolha **GitHub** como provider
+   - Autorize a conexão do AWS Amplify com sua conta GitHub
+
+**3. Configurar Repositório:**
+   - Selecione o repositório: **`FTakElu/DSIM`**
+   - Escolha o branch: **`main`**
+   - O Amplify detectará automaticamente o arquivo **`amplify.yml`** na raiz
+
+**4. Configurar Variáveis de Ambiente:**
+   - Na seção **"Environment variables"**, adicione:
+     - **Key**: `VITE_API_URL`
+     - **Value**: `https://87xx2k2vn5.execute-api.us-east-1.amazonaws.com`
+
+**5. Revisar e Deploy:**
+   - Revise as configurações
+   - Clique em **"Save and deploy"**
+   - Aguarde ~5-10 minutos para o build completar
+
+**6. Deploy Automático:**
+   - ✅ A cada `git push` no branch `main`, o Amplify faz rebuild automaticamente
+   - ✅ Você receberá notificações de sucesso/erro do deploy
+   - ✅ O frontend ficará acessível via URL fornecida pelo Amplify
+
+**Arquivo de configuração**: `amplify.yml` (localizado na raiz do repositório)
+
+---
+
 ## 🎯 Funcionalidades
 
 - ✅ **Dashboard de Pacientes**: Visualização em cards com dados em tempo real e cores dinâmicas
@@ -78,25 +134,38 @@ frontend/
 
 ## ⚙️ Configuração
 
-### 1. Instalar Dependências
+### Opção 1: Desenvolvimento Local
+
+#### 1. Instalar Dependências
 
 ```bash
 cd frontend
 npm install
 ```
 
-### 2. Configurar URL da API
+#### 2. Configurar URL da API
 
-Edite `src/service/api.ts` para apontar para o backend:
+**Para desenvolvimento local** conectado ao backend de produção na EC2:
+
+Edite `src/service/api.ts`:
 
 ```typescript
 const api = axios.create({
-  baseURL: 'http://localhost:9999/api', // URL do backend
+  baseURL: 'https://87xx2k2vn5.execute-api.us-east-1.amazonaws.com',
   timeout: 10000,
 });
 ```
 
-### 3. Executar em Desenvolvimento
+**Ou para desenvolvimento local** com backend local:
+
+```typescript
+const api = axios.create({
+  baseURL: 'http://localhost:9999/api',
+  timeout: 10000,
+});
+```
+
+#### 3. Executar em Desenvolvimento
 
 ```bash
 npm run dev
@@ -104,13 +173,13 @@ npm run dev
 
 A aplicação estará disponível em: **http://localhost:5173**
 
-### 4. Build para Produção
+### Opção 2: Build para Produção (Amplify)
 
 ```bash
 npm run build
 ```
 
-Os arquivos otimizados estarão em `dist/`
+Os arquivos otimizados estarão em `dist/` e serão automaticamente deployados pelo Amplify a cada push no GitHub.
 
 ## 🚀 Como Usar
 
@@ -358,3 +427,5 @@ Para problemas ou dúvidas:
 1. Verifique o console do navegador (F12)
 2. Consulte os logs do backend
 3. Revise a documentação da API em `../backend/README.md`
+
+

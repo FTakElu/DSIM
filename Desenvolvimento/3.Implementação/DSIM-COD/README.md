@@ -1,6 +1,28 @@
-# Sistema DSIM - Monitoramento de Pacientes IoT
+# DSIM-COD - Sistema de Monitoramento de Pacientes IoT
 
 Sistema completo de monitoramento de sinais vitais em tempo real utilizando pulseiras IoT, AWS e React.
+
+## 🌐 Infraestrutura Implantada (Produção)
+
+### Recursos AWS Ativos
+
+| Recurso | Identificador | URL/IP | Status |
+|---------|---------------|--------|--------|
+| **EC2 Instance** | `i-0019770d6275005b2` | `98.95.251.71` | ✅ Rodando |
+| **Elastic IP** | `eipalloc-059c204aea5f1234f` | `98.95.251.71` | ✅ Fixo |
+| **API Gateway** | `87xx2k2vn5` | `https://87xx2k2vn5.execute-api.us-east-1.amazonaws.com` | ✅ Ativo |
+| **Security Group** | `sg-0f38c9d3a91bd3473` | Portas: 22, 80, 443, 9999 | ✅ Configurado |
+| **Backend (Direto)** | HTTP | `http://98.95.251.71:9999` | ✅ Acessível |
+| **DynamoDB** | 5 tabelas | `us-east-1` | ✅ Ativas |
+| **Process Manager** | PM2 | `dsim-backend` | ✅ Auto-restart |
+
+### Endpoints Públicos
+
+- **API Gateway (Produção)**: `https://87xx2k2vn5.execute-api.us-east-1.amazonaws.com`
+- **Backend EC2 (Direto)**: `http://98.95.251.71:9999`
+- **Health Check**: `https://87xx2k2vn5.execute-api.us-east-1.amazonaws.com/health`
+
+---
 
 ## 🏥 Visão Geral
 
@@ -73,8 +95,6 @@ DSIM-COD/
 │   ├── lambda/                # Função Lambda
 │   │   └── src/
 │   │       └── index.ts       # Processador de sensores
-│   ├── scripts/
-│   │   └── setup-dynamodb.sh # Script automação DynamoDB
 │   ├── package.json
 │   ├── tsconfig.json
 │   ├── .env.example
@@ -233,16 +253,56 @@ O sistema calcula automaticamente o Modified Early Warning Score baseado em:
 
 ## 📈 Deploy
 
-### Ordem de Implantação
+### Infraestrutura AWS Implantada
 
-1. **DynamoDB** - Criar 5 tabelas
-2. **AWS IoT Core** - Configurar Thing, certificados e regras
-3. **Lambda** - Deploy da função de processamento
-4. **EC2** - Deploy do backend Node.js
-5. **API Gateway** - Configurar proxy
-6. **Amplify** - Deploy do frontend
+O sistema DSIM está hospedado na AWS com os seguintes recursos em produção:
 
-**Guia completo**: [DEPLOYMENT_GUIDE.md](backend/DEPLOYMENT_GUIDE.md)
+**Recursos AWS ativos:**
+1. ✅ EC2 (i-0019770d6275005b2): Instância t2.micro com backend Node.js + PM2
+2. ✅ Elastic IP (98.95.251.71): IP fixo permanente
+3. ✅ API Gateway (87xx2k2vn5): HTTP API com proxy para EC2
+4. ✅ DynamoDB: 5 tabelas (Users, Patients, SensorData, Alarms, Connections)
+5. ✅ Security Group (sg-0f38c9d3a91bd3473): Firewall configurado
+6. ✅ Lambda (DSIM-MEWS-Processor): Processador com trigger DynamoDB Stream
+7. ✅ AWS IoT Core: Thing `Pulseira_DSIM` conectado
+
+**Endpoints ativos:**
+- Backend EC2: `http://98.95.251.71:9999`
+- API Gateway: `https://87xx2k2vn5.execute-api.us-east-1.amazonaws.com`
+- Frontend Amplify: (a configurar)
+
+**Acesso à EC2:**
+
+```cmd
+# Via SSH
+ssh -i "../CERTIFICADOS/dsim_keypair.pem" ec2-user@98.95.251.71
+
+# Ver status do backend
+pm2 status
+
+# Ver logs
+pm2 logs dsim-backend
+
+# Reiniciar
+pm2 restart dsim-backend
+```
+
+**Gerenciamento de Credenciais AWS Academy:**
+
+As credenciais AWS Academy expiram a cada 2-4 horas. Para atualizar na EC2:
+
+```cmd
+# No Windows (raiz do projeto):
+aws configure  # Colar novas credenciais da AWS Academy
+update_ec2_credentials.bat  # Atualiza automaticamente na EC2
+```
+
+**Frontend no Amplify:**
+- Console AWS Amplify: https://console.aws.amazon.com/amplify/
+- Repositório: `FTakElu/DSIM` (branch `main`)
+- Variável necessária: `VITE_API_URL=https://87xx2k2vn5.execute-api.us-east-1.amazonaws.com`
+
+**Documentação completa**: [`../../GUIA_DEPLOY.md`](../../GUIA_DEPLOY.md)
 
 ## 🧪 Testes
 
