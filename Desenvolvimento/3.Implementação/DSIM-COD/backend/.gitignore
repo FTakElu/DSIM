@@ -1,5 +1,8 @@
 node_modules/
 dist/
+target/
 .env
 *.log
 .DS_Store
+create-test-user.js
+test-api.js
