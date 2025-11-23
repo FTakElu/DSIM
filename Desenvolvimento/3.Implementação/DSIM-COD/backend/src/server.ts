@@ -9,6 +9,12 @@ import pacientesRoutes from './routes/pacientes';
 
 dotenv.config();
 
+// Debug AWS credentials
+console.log('🔑 AWS Credentials Check:');
+console.log('AWS_ACCESS_KEY_ID:', process.env.AWS_ACCESS_KEY_ID ? 'PRESENT' : 'MISSING');
+console.log('AWS_SECRET_ACCESS_KEY:', process.env.AWS_SECRET_ACCESS_KEY ? 'PRESENT' : 'MISSING');
+console.log('AWS_SESSION_TOKEN:', process.env.AWS_SESSION_TOKEN ? 'PRESENT' : 'MISSING');
+
 const app = express();
 const PORT = process.env.PORT || 9999;
 
