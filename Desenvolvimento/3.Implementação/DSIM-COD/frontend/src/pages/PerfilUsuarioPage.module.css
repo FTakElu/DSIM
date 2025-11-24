@@ -164,6 +164,69 @@
   transform: none;
 }
 
+/* Zona de Perigo */
+.dangerZone {
+  margin-top: 2rem;
+  padding: 1.5rem;
+  border: 2px solid #e53935;
+  border-radius: 8px;
+  background: #ffebee;
+}
+
+.dangerTitle {
+  font-size: 1.25rem;
+  color: #c62828;
+  margin: 0 0 0.5rem 0;
+}
+
+.dangerDescription {
+  color: #666;
+  font-size: 0.9rem;
+  margin: 0 0 1rem 0;
+}
+
+/* Modal */
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.modalContent {
+  background: white;
+  border-radius: 12px;
+  padding: 2rem;
+  max-width: 500px;
+  width: 100%;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+}
+
+.modalContent h2 {
+  color: #c62828;
+  margin: 0 0 1rem 0;
+}
+
+.modalContent p {
+  color: #666;
+  margin: 0 0 1.5rem 0;
+  line-height: 1.5;
+}
+
+.modalActions {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+  margin-top: 1.5rem;
+}
+
 @media (max-width: 768px) {
   .container {
     padding: 1rem;
@@ -183,6 +246,14 @@
 
   .cancelButton,
   .saveButton {
+    width: 100%;
+  }
+
+  .modalActions {
+    flex-direction: column-reverse;
+  }
+
+  .modalActions button {
     width: 100%;
   }
 }

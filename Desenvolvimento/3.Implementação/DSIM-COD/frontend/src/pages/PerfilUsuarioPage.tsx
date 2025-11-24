@@ -9,6 +9,8 @@ export default function PerfilUsuarioPage() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteConfirmPassword, setDeleteConfirmPassword] = useState('');
   
   const [formData, setFormData] = useState({
     nome: '',
@@ -83,6 +85,36 @@ export default function PerfilUsuarioPage() {
       setError(err.response?.data?.message || 'Erro ao atualizar perfil');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!deleteConfirmPassword) {
+      setError('Digite sua senha para confirmar a exclusão');
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+
+    try {
+      await api.delete('/api/auth/conta', {
+        data: { senha: deleteConfirmPassword }
+      });
+      
+      // Limpar dados locais
+      localStorage.removeItem('token');
+      localStorage.removeItem('userName');
+      localStorage.removeItem('userEmail');
+      
+      alert('Conta excluída com sucesso!');
+      navigate('/');
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Erro ao excluir conta');
+    } finally {
+      setLoading(false);
+      setShowDeleteModal(false);
+      setDeleteConfirmPassword('');
     }
   };
 
@@ -193,7 +225,69 @@ export default function PerfilUsuarioPage() {
             </button>
           </div>
         </form>
+
+        {/* Seção de Zona de Perigo */}
+        <div className={styles.dangerZone}>
+          <h2 className={styles.dangerTitle}>Zona de Perigo</h2>
+          <p className={styles.dangerDescription}>
+            A exclusão da conta é permanente e não pode ser desfeita. Todos os seus pacientes e dados serão excluídos.
+          </p>
+          <button 
+            type="button" 
+            onClick={() => setShowDeleteModal(true)}
+            className={`${theme.btn} ${theme.danger}`}
+          >
+            Excluir Conta
+          </button>
+        </div>
       </div>
+
+      {/* Modal de Confirmação de Exclusão */}
+      {showDeleteModal && (
+        <div className={styles.modal}>
+          <div className={styles.modalContent}>
+            <h2>Confirmar Exclusão de Conta</h2>
+            <p>Esta ação é irreversível. Todos os seus dados e pacientes cadastrados serão excluídos permanentemente.</p>
+            
+            <div className={styles.formGroup}>
+              <label htmlFor="confirmPassword">Digite sua senha para confirmar:</label>
+              <input
+                type="password"
+                id="confirmPassword"
+                value={deleteConfirmPassword}
+                onChange={(e) => setDeleteConfirmPassword(e.target.value)}
+                placeholder="Sua senha"
+                autoFocus
+              />
+            </div>
+
+            {error && <div className={styles.error}>{error}</div>}
+
+            <div className={styles.modalActions}>
+              <button 
+                type="button" 
+                onClick={() => {
+                  setShowDeleteModal(false);
+                  setDeleteConfirmPassword('');
+                  setError('');
+                }}
+                className={`${theme.btn} ${theme.ghost}`}
+                disabled={loading}
+              >
+                Cancelar
+              </button>
+              <button 
+                type="button" 
+                onClick={handleDeleteAccount}
+                className={`${theme.btn} ${theme.danger}`}
+                disabled={loading}
+              >
+                {loading ? 'Excluindo...' : 'Confirmar Exclusão'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -1,3 +1,5 @@
+import { IoTClient, ListThingsCommand } from '@aws-sdk/client-iot';
+import { IoTDataPlaneClient } from '@aws-sdk/client-iot-data-plane';
 import { SNSClient, SubscribeCommand } from '@aws-sdk/client-sns';
 import {
     DeleteCommand,
@@ -97,8 +99,24 @@ router.get('/:id', async (req: AuthRequest, res: Response): Promise<void> => {
 // Listar dispositivos disponíveis (não atribuídos a nenhum paciente)
 router.get('/devices/available', async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    // Lista de todos os dispositivos IoT cadastrados
-    const allDevices = ['Pulseira_DSIM', 'Pulseira_02', 'Pulseira_03'];
+    const iotClient = new IoTDataPlaneClient({ region: process.env.AWS_REGION });
+    const iot = new IoTClient({ region: process.env.AWS_REGION });
+    
+    // Buscar todas as Things (dispositivos) do IoT Core
+    let allDevices: string[] = [];
+    try {
+      const listThingsCommand = new ListThingsCommand({});
+      const thingsResponse = await iot.send(listThingsCommand);
+      allDevices = (thingsResponse.things || [])
+        .map(thing => thing.thingName)
+        .filter((name): name is string => name !== undefined);
+      
+      console.log('Dispositivos IoT Core encontrados:', allDevices);
+    } catch (iotError) {
+      console.error('Erro ao buscar dispositivos do IoT Core:', iotError);
+      // Se falhar, retornar lista vazia em vez de hardcoded
+      allDevices = [];
+    }
     
     // Buscar todos os pacientes para verificar quais dispositivos estão em uso
     const result = await dynamoDB.send(

@@ -1,4 +1,4 @@
-import { GetCommand, PutCommand, UpdateCommand } from '@aws-sdk/lib-dynamodb';
+import { DeleteCommand, GetCommand, PutCommand, ScanCommand, UpdateCommand } from '@aws-sdk/lib-dynamodb';
 import bcrypt from 'bcryptjs';
 import { Request, Response, Router } from 'express';
 import jwt from 'jsonwebtoken';
@@ -236,6 +236,84 @@ router.put('/perfil', authMiddleware, async (req: AuthRequest, res: Response): P
   } catch (error) {
     console.error('Erro ao atualizar perfil:', error);
     res.status(500).json({ message: 'Erro ao atualizar perfil' });
+  }
+});
+
+// Excluir conta do usuário
+router.delete('/conta', authMiddleware, async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const { senha } = req.body;
+
+    if (!senha) {
+      res.status(400).json({ message: 'Senha é obrigatória para confirmar a exclusão' });
+      return;
+    }
+
+    // Buscar usuário atual
+    const result = await dynamoDB.send(
+      new GetCommand({
+        TableName: TABLES.USERS,
+        Key: { email: req.userEmail },
+      })
+    );
+
+    const user = result.Item as User | undefined;
+
+    if (!user) {
+      res.status(404).json({ message: 'Usuário não encontrado' });
+      return;
+    }
+
+    // Verificar senha
+    const senhaValida = await bcrypt.compare(senha, user.senha);
+    if (!senhaValida) {
+      res.status(401).json({ message: 'Senha incorreta' });
+      return;
+    }
+
+    // Buscar todos os pacientes do usuário
+    const pacientesResult = await dynamoDB.send(
+      new ScanCommand({
+        TableName: TABLES.PATIENTS,
+        FilterExpression: '#userId = :userId',
+        ExpressionAttributeNames: {
+          '#userId': 'userId',
+        },
+        ExpressionAttributeValues: {
+          ':userId': req.userId,
+        },
+      })
+    );
+
+    // Excluir todos os pacientes
+    if (pacientesResult.Items && pacientesResult.Items.length > 0) {
+      for (const paciente of pacientesResult.Items) {
+        await dynamoDB.send(
+          new DeleteCommand({
+            TableName: TABLES.PATIENTS,
+            Key: { id: paciente.id },
+          })
+        );
+        console.log(`Paciente ${paciente.id} excluído`);
+      }
+    }
+
+    // Excluir o usuário
+    await dynamoDB.send(
+      new DeleteCommand({
+        TableName: TABLES.USERS,
+        Key: { email: req.userEmail },
+      })
+    );
+
+    console.log(`Usuário ${req.userEmail} e seus ${pacientesResult.Items?.length || 0} pacientes excluídos`);
+
+    res.json({
+      message: 'Conta excluída com sucesso',
+    });
+  } catch (error) {
+    console.error('Erro ao excluir conta:', error);
+    res.status(500).json({ message: 'Erro ao excluir conta' });
   }
 });
 
