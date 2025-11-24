@@ -1,10 +1,11 @@
-import { GetCommand, PutCommand } from '@aws-sdk/lib-dynamodb';
+import { GetCommand, PutCommand, UpdateCommand } from '@aws-sdk/lib-dynamodb';
 import bcrypt from 'bcryptjs';
 import { Request, Response, Router } from 'express';
 import jwt from 'jsonwebtoken';
 import { v4 as uuidv4 } from 'uuid';
 import { dynamoDB, TABLES } from '../config/aws';
-import { User } from '../types';
+import { authMiddleware } from '../middleware/auth';
+import { AuthRequest, User } from '../types';
 
 const router = Router();
 const JWT_SECRET = process.env.JWT_SECRET || 'fallback_secret_key';

@@ -13,7 +13,7 @@ import { authMiddleware } from '../middleware/auth';
 import { AuthRequest, Patient } from '../types';
 const snsClient = new SNSClient({ region: process.env.AWS_REGION });
 
-async function subscribeResponsavelSNS({ email, telefone }) {
+async function subscribeResponsavelSNS({ email, telefone }: { email?: string; telefone?: string }) {
   // Subscrever email
   if (email) {
     try {
