@@ -1,95 +1,72 @@
-import dotenv from 'dotenv';
-import { createServer } from 'http';
-import { WebSocket, WebSocketServer } from 'ws';
+import { Server, Socket } from 'socket.io';
 
-dotenv.config();
+let io: Server;
 
-const PORT = process.env.WS_PORT || 8080;
+export function initializeWebSocket(socketServer: Server) {
+  io = socketServer;
 
-// Criar servidor HTTP
-const server = createServer();
+  io.on('connection', (socket: Socket) => {
+    console.log(`🔌 Cliente WebSocket conectado: ${socket.id}`);
 
-// Criar WebSocket Server
-const wss = new WebSocketServer({ server });
+    // Cliente se inscreve para receber atualizações de um paciente específico
+    socket.on('subscribe-patient', (patientId: string) => {
+      socket.join(`patient-${patientId}`);
+      console.log(`📡 Cliente ${socket.id} inscrito no paciente ${patientId}`);
+    });
 
-// Armazenar conexões ativas
-const connections = new Map<string, WebSocket>();
+    // Cliente cancela inscrição
+    socket.on('unsubscribe-patient', (patientId: string) => {
+      socket.leave(`patient-${patientId}`);
+      console.log(`📴 Cliente ${socket.id} desinscrito do paciente ${patientId}`);
+    });
 
-wss.on('connection', (ws: WebSocket, req) => {
-  const clientId = req.headers['sec-websocket-key'] || Math.random().toString();
-  
-  console.log(`Cliente conectado: ${clientId}`);
-  connections.set(clientId.toString(), ws);
+    // Cliente se inscreve para receber atualizações de todos os pacientes
+    socket.on('subscribe-all-patients', () => {
+      socket.join('all-patients');
+      console.log(`📡 Cliente ${socket.id} inscrito em todos os pacientes`);
+    });
 
-  // Enviar mensagem de boas-vindas
-  ws.send(
-    JSON.stringify({
-      type: 'connection',
-      message: 'Conectado ao servidor de alertas DSIM',
-      timestamp: Date.now(),
-    })
-  );
-
-  // Receber mensagens do cliente
-  ws.on('message', (data: Buffer) => {
-    try {
-      const message = JSON.parse(data.toString());
-      console.log('Mensagem recebida:', message);
-
-      // Aqui você pode processar mensagens específicas
-      // Por exemplo, registrar o pacienteId do cliente
-      if (message.type === 'register' && message.pacienteId) {
-        connections.set(message.pacienteId, ws);
-        ws.send(
-          JSON.stringify({
-            type: 'registered',
-            pacienteId: message.pacienteId,
-            timestamp: Date.now(),
-          })
-        );
-      }
-    } catch (error) {
-      console.error('Erro ao processar mensagem:', error);
-    }
+    socket.on('disconnect', () => {
+      console.log(`🔌 Cliente WebSocket desconectado: ${socket.id}`);
+    });
   });
 
-  // Lidar com desconexão
-  ws.on('close', () => {
-    console.log(`Cliente desconectado: ${clientId}`);
-    connections.delete(clientId.toString());
-  });
+  return io;
+}
 
-  ws.on('error', (error) => {
-    console.error(`Erro WebSocket:`, error);
-  });
-});
-
-// Função para enviar alerta para um paciente específico
-export function sendAlert(pacienteId: string, alert: any) {
-  const ws = connections.get(pacienteId);
-  if (ws && ws.readyState === WebSocket.OPEN) {
-    ws.send(JSON.stringify(alert));
-    return true;
+export function getIO(): Server {
+  if (!io) {
+    throw new Error('Socket.io não foi inicializado');
   }
-  return false;
+  return io;
 }
 
-// Função para broadcast de alertas
-export function broadcastAlert(alert: any) {
-  let sent = 0;
-  connections.forEach((ws) => {
-    if (ws.readyState === WebSocket.OPEN) {
-      ws.send(JSON.stringify(alert));
-      sent++;
-    }
-  });
-  return sent;
+// Enviar atualização de sinais vitais para um paciente específico
+export function emitVitalUpdate(patientId: string, data: any) {
+  if (io) {
+    io.to(`patient-${patientId}`).emit('vital-update', data);
+    io.to('all-patients').emit('vital-update', data);
+    console.log(`📤 Atualização de sinais vitais enviada para paciente ${patientId}`);
+  }
 }
 
-// Iniciar servidor WebSocket
-server.listen(PORT, () => {
-  console.log(`🔌 WebSocket Server rodando na porta ${PORT}`);
-});
+// Enviar alerta (pânico, queda, etc.)
+export function emitAlert(patientId: string, alertType: string, data: any) {
+  if (io) {
+    io.to(`patient-${patientId}`).emit('alert', { type: alertType, ...data });
+    io.to('all-patients').emit('alert', { type: alertType, ...data });
+    console.log(`🚨 Alerta ${alertType} enviado para paciente ${patientId}`);
+  }
+}
 
-export { server, wss };
+// Enviar atualização de status da pulseira (ligada/desligada/offline)
+export function emitDeviceStatus(patientId: string, status: string) {
+  if (io) {
+    const data = { patientId, status, timestamp: Date.now() };
+    io.to(`patient-${patientId}`).emit('device-status', data);
+    io.to('all-patients').emit('device-status', data);
+    console.log(`📟 Status do dispositivo ${status} enviado para paciente ${patientId}`);
+  }
+}
+
 

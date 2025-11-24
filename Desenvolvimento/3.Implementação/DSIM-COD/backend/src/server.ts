@@ -2,10 +2,13 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import express from 'express';
 import helmet from 'helmet';
+import { createServer } from 'http';
+import { Server } from 'socket.io';
 import alarmsRoutes from './routes/alarms';
 import authRoutes from './routes/auth';
 import historicoRoutes from './routes/historico';
 import pacientesRoutes from './routes/pacientes';
+import { initializeWebSocket } from './websocket';
 
 dotenv.config();
 
@@ -48,10 +51,31 @@ app.use((req, res) => {
   res.status(404).json({ message: 'Rota não encontrada' });
 });
 
+// Criar servidor HTTP
+const httpServer = createServer(app);
+
+// Inicializar WebSocket
+const io = new Server(httpServer, {
+  cors: {
+    origin: [
+      'http://localhost:5173',
+      'http://localhost:3000',
+      'https://main.d2cq9un5umdfmy.amplifyapp.com'
+    ],
+    methods: ['GET', 'POST'],
+    credentials: true
+  }
+});
+
+initializeWebSocket(io);
+
 // Iniciar servidor
-app.listen(PORT, () => {
-  console.log(`🚀 Servidor rodando na porta ${PORT}`);
+httpServer.listen(PORT, () => {
+  console.log(`🚀 Servidor HTTP rodando na porta ${PORT}`);
+  console.log(`🔌 WebSocket disponível na porta ${PORT}`);
   console.log(`Ambiente: ${process.env.NODE_ENV || 'development'}`);
 });
 
 export default app;
+export { io };
+

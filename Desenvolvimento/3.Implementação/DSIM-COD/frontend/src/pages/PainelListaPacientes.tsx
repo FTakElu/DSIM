@@ -1,9 +1,11 @@
 
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { toast } from "react-toastify";
 import logo from "../assets/logo-dsim.png";
 import PatientCard from "../components/PatientCard/PatientCard";
 import UserMenu from "../components/UserMenu/UserMenu";
+import { useWebSocket } from "../hooks/useWebSocket";
 import api from '../service/api';
 import theme from "../styles/Theme.module.css";
 import { Pacientes } from "../Types/PacientesType";
@@ -42,39 +44,76 @@ const PainelListaPacientes: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Configurar WebSocket com Socket.io
+  const { isConnected, lastUpdate, lastAlert } = useWebSocket({
+    autoConnect: true,
+    subscribeToAllPatients: true,
+    onVitalUpdate: (data) => {
+      console.log('📊 Atualização de sinais vitais recebida:', data);
+      
+      // Atualizar paciente específico na lista
+      setPatients(prevPatients => 
+        prevPatients.map(p => 
+          p.id === data.patientId 
+            ? {
+                ...p,
+                vitals: {
+                  temperatura: { value: data.temperatura || p.vitals?.temperatura?.value || 0, status: 'stable' },
+                  batimentos: { value: data.frequencia_cardiaca || p.vitals?.batimentos?.value || 0, status: 'stable' },
+                  oxigenio: { value: data.saturacao_oxigenio || p.vitals?.oxigenio?.value || 0, status: 'stable' },
+                },
+                bateria: data.bateria,
+                status: data.status,
+              }
+            : p
+        )
+      );
+    },
+    onAlert: (alert) => {
+      console.log('🚨 Alerta recebido:', alert);
+      
+      if (alert.type === 'panic') {
+        toast.error(`🚨 ALERTA DE PÂNICO: ${alert.patientName}!`, {
+          position: 'top-center',
+          autoClose: false,
+          closeOnClick: false,
+        });
+      } else if (alert.type === 'fall') {
+        toast.warning(`⚠️ QUEDA DETECTADA: ${alert.patientName}!`, {
+          position: 'top-center',
+          autoClose: 10000,
+        });
+      }
+    },
+    onDeviceStatus: (status) => {
+      console.log('📟 Status do dispositivo atualizado:', status);
+      
+      // Atualizar status do paciente
+      setPatients(prevPatients => 
+        prevPatients.map(p => 
+          p.id === status.patientId 
+            ? { ...p, status: status.status }
+            : p
+        )
+      );
+    },
+  });
+
   useEffect(() => {
     fetchPacientes(); 
-
-    // TODO: WebSocket desabilitado temporariamente até configurar SSL/WSS
-    /* const ws = new WebSocket(WS_BASE_URL);
-    
-    ws.onopen = () => {
-      console.log('WebSocket conectado ao painel de pacientes');
-    };
-
-    ws.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      console.log('Dados recebidos via WebSocket:', data);
-      
-      // Atualiza a lista de pacientes quando receber novos dados
-      if (data.type === 'vital-update' || data.type === 'patient-update') {
-        fetchPacientes();
-      }
-    };
-
-    ws.onerror = (error) => {
-      console.error('Erro no WebSocket:', error);
-    };
-
-    ws.onclose = () => {
-      console.log('WebSocket desconectado');
-    };
-
-    // Cleanup: fecha o WebSocket ao desmontar o componente
-    return () => {
-      ws.close();
-    }; */
   }, []); 
+
+  useEffect(() => {
+    if (lastUpdate) {
+      console.log('🔄 Última atualização:', lastUpdate);
+    }
+  }, [lastUpdate]);
+
+  useEffect(() => {
+    if (lastAlert) {
+      console.log('🚨 Último alerta:', lastAlert);
+    }
+  }, [lastAlert]);
 
   const fetchPacientes = async () => {
     try {
@@ -108,6 +147,23 @@ const PainelListaPacientes: React.FC = () => {
       <section className={styles.titleSection}>
         <h1>Lista de pacientes</h1>
         <p>Autonomia para quem usa, tranquilidade para quem ama</p>
+        <div style={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          gap: '8px', 
+          marginTop: '8px',
+          fontSize: '14px',
+          color: isConnected ? '#22c55e' : '#ef4444'
+        }}>
+          <div style={{
+            width: '8px',
+            height: '8px',
+            borderRadius: '50%',
+            backgroundColor: isConnected ? '#22c55e' : '#ef4444',
+            animation: isConnected ? 'pulse 2s infinite' : 'none'
+          }} />
+          {isConnected ? '🔌 Tempo real ativo' : '❌ Tempo real desconectado'}
+        </div>
       </section>
       <main className={styles.gridContainer}>
         {patients.length === 0 ? (

@@ -21,7 +21,7 @@
     "@aws-sdk/client-dynamodb": "^3.450.0",
     "@aws-sdk/client-iot": "^3.936.0",
     "@aws-sdk/client-iot-data-plane": "^3.936.0",
-    "@aws-sdk/client-sns": "^3.936.0",
+    "@aws-sdk/client-sns": "^3.939.0",
     "@aws-sdk/lib-dynamodb": "^3.450.0",
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
@@ -29,6 +29,7 @@
     "express": "^4.18.2",
     "helmet": "^7.1.0",
     "jsonwebtoken": "^9.0.2",
+    "socket.io": "^4.8.1",
     "uuid": "^9.0.1",
     "ws": "^8.14.2"
   },

@@ -12,7 +12,9 @@ import { Response, Router } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import { dynamoDB, TABLES } from '../config/aws';
 import { authMiddleware } from '../middleware/auth';
+import { sendFallAlert, sendPanicAlert } from '../services/sns-service';
 import { AuthRequest, Patient } from '../types';
+import { emitAlert, emitDeviceStatus, emitVitalUpdate } from '../websocket';
 const snsClient = new SNSClient({ region: process.env.AWS_REGION });
 
 async function subscribeResponsavelSNS({ email, telefone }: { email?: string; telefone?: string }) {
@@ -330,6 +332,102 @@ router.post(
     } catch (error) {
       console.error('Erro ao vincular dispositivo:', error);
       res.status(500).json({ message: 'Erro ao vincular dispositivo' });
+    }
+  }
+);
+
+// Endpoint para receber dados do IoT Core via Lambda/API Gateway
+router.post(
+  '/iot/data',
+  async (req: AuthRequest, res: Response): Promise<void> => {
+    try {
+      const sensorData = req.body;
+      const { deviceId } = sensorData;
+
+      if (!deviceId) {
+        res.status(400).json({ message: 'deviceId é obrigatório' });
+        return;
+      }
+
+      // Buscar paciente pelo deviceId
+      const result = await dynamoDB.send(
+        new ScanCommand({
+          TableName: TABLES.PATIENTS,
+          FilterExpression: 'deviceId = :deviceId',
+          ExpressionAttributeValues: {
+            ':deviceId': deviceId,
+          },
+        })
+      );
+
+      const patient = result.Items?.[0];
+      
+      if (!patient) {
+        console.warn(`Dispositivo ${deviceId} não está vinculado a nenhum paciente`);
+        res.status(404).json({ message: 'Paciente não encontrado para este dispositivo' });
+        return;
+      }
+
+      // Emitir atualização de sinais vitais via WebSocket
+      emitVitalUpdate(patient.id, {
+        patientId: patient.id,
+        patientName: patient.nome,
+        deviceId,
+        ...sensorData,
+        timestamp: Date.now(),
+      });
+
+      // Verificar alertas
+      if (sensorData.panico_ativo) {
+        console.log(`🚨 Pânico detectado para paciente ${patient.id}`);
+        
+        // Emitir alerta via WebSocket
+        emitAlert(patient.id, 'panic', {
+          patientId: patient.id,
+          patientName: patient.nome,
+          message: 'Botão de pânico acionado!',
+          ...sensorData,
+        });
+
+        // Enviar notificação SNS
+        try {
+          await sendPanicAlert(patient as any, sensorData);
+        } catch (snsError) {
+          console.error('Erro ao enviar alerta SNS de pânico:', snsError);
+        }
+      }
+
+      if (sensorData.queda_detectada) {
+        console.log(`⚠️ Queda detectada para paciente ${patient.id}`);
+        
+        // Emitir alerta via WebSocket
+        emitAlert(patient.id, 'fall', {
+          patientId: patient.id,
+          patientName: patient.nome,
+          message: 'Queda detectada!',
+          ...sensorData,
+        });
+
+        // Enviar notificação SNS
+        try {
+          await sendFallAlert(patient as any, sensorData);
+        } catch (snsError) {
+          console.error('Erro ao enviar alerta SNS de queda:', snsError);
+        }
+      }
+
+      // Verificar status do dispositivo
+      if (sensorData.status) {
+        emitDeviceStatus(patient.id, sensorData.status);
+      }
+
+      res.json({ 
+        message: 'Dados recebidos e processados', 
+        patientId: patient.id 
+      });
+    } catch (error) {
+      console.error('Erro ao processar dados do IoT:', error);
+      res.status(500).json({ message: 'Erro ao processar dados do IoT' });
     }
   }
 );
