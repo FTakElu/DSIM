@@ -1,6 +1,6 @@
 .container {
   min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #0292B7 0%, #026d8a 100%);
   padding: 2rem;
   display: flex;
   justify-content: center;
@@ -24,7 +24,7 @@
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  color: #667eea;
+  color: #0292B7;
   text-decoration: none;
   font-weight: 500;
   margin-bottom: 1rem;
@@ -32,7 +32,7 @@
 }
 
 .backButton:hover {
-  color: #764ba2;
+  color: #026d8a;
 }
 
 .backButton svg {
@@ -117,8 +117,8 @@
 
 .formGroup input:focus {
   outline: none;
-  border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  border-color: #0292B7;
+  box-shadow: 0 0 0 3px rgba(2, 146, 183, 0.1);
 }
 
 .actions {
@@ -149,13 +149,14 @@
 }
 
 .saveButton {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #0292B7;
   color: white;
 }
 
 .saveButton:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+  box-shadow: 0 4px 12px rgba(2, 146, 183, 0.3);
+  background: #026d8a;
 }
 
 .saveButton:disabled {
