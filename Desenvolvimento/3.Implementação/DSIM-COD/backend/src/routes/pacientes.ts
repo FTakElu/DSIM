@@ -108,8 +108,8 @@ router.get('/devices/available', async (req: AuthRequest, res: Response): Promis
       const listThingsCommand = new ListThingsCommand({});
       const thingsResponse = await iot.send(listThingsCommand);
       allDevices = (thingsResponse.things || [])
-        .map(thing => thing.thingName)
-        .filter((name): name is string => name !== undefined);
+        .map((thing: any) => thing.thingName)
+        .filter((name: any): name is string => name !== undefined);
       
       console.log('Dispositivos IoT Core encontrados:', allDevices);
     } catch (iotError) {
