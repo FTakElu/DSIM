@@ -50,6 +50,10 @@ export interface SensorData {
   batimentos: number;
   oxigenio: number;
   temperatura: number;
+  panico_ativo?: boolean;
+  queda_detectada?: boolean;
+  bateria?: number;
+  status?: 'online' | 'offline' | 'ligada' | 'desligada' | 'reconectada';
   escoreMEWS?: number;
   statusMEWS?: VitalStatus;
 }
