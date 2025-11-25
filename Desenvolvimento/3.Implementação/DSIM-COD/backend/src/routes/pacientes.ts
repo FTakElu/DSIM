@@ -48,7 +48,170 @@ async function subscribeResponsavelSNS({ email, telefone }: { email?: string; te
 
 const router = Router();
 
-// Todas as rotas de pacientes requerem autenticação
+// Endpoint público para receber dados do IoT Core (SEM autenticação JWT)
+// Este endpoint é chamado pelo AWS IoT Core via MQTT/Lambda
+router.post(
+  '/iot/data',
+  async (req: any, res: Response): Promise<void> => {
+    try {
+      const sensorData = req.body;
+      const { deviceId } = sensorData;
+
+      if (!deviceId) {
+        res.status(400).json({ message: 'deviceId é obrigatório' });
+        return;
+      }
+
+      console.log(`📡 Dados IoT recebidos do dispositivo ${deviceId}`);
+
+      // Buscar paciente pelo deviceId
+      const result = await dynamoDB.send(
+        new ScanCommand({
+          TableName: TABLES.PATIENTS,
+          FilterExpression: 'deviceId = :deviceId',
+          ExpressionAttributeValues: {
+            ':deviceId': deviceId,
+          },
+        })
+      );
+
+      const patient = result.Items?.[0];
+      
+      if (!patient) {
+        console.warn(`Dispositivo ${deviceId} não está vinculado a nenhum paciente`);
+        res.status(404).json({ message: 'Paciente não encontrado para este dispositivo' });
+        return;
+      }
+
+      // Emitir atualização de sinais vitais via WebSocket
+      emitVitalUpdate(patient.id, {
+        patientId: patient.id,
+        patientName: patient.nome,
+        deviceId,
+        ...sensorData,
+        timestamp: Date.now(),
+      });
+
+      // Verificar alertas de pânico
+      if (sensorData.panico_ativo) {
+        console.log(`🚨 Pânico detectado para paciente ${patient.id}`);
+        
+        emitAlert(patient.id, 'panic', {
+          patientId: patient.id,
+          patientName: patient.nome,
+          message: 'Botão de pânico acionado!',
+          ...sensorData,
+        });
+
+        try {
+          await sendPanicAlert(patient as any, sensorData);
+        } catch (snsError) {
+          console.error('Erro ao enviar alerta SNS de pânico:', snsError);
+        }
+      }
+
+      // Verificar alertas de queda
+      if (sensorData.queda_detectada) {
+        console.log(`⚠️ Queda detectada para paciente ${patient.id}`);
+        
+        emitAlert(patient.id, 'fall', {
+          patientId: patient.id,
+          patientName: patient.nome,
+          message: 'Queda detectada!',
+          ...sensorData,
+        });
+
+        try {
+          await sendFallAlert(patient as any, sensorData);
+        } catch (snsError) {
+          console.error('Erro ao enviar alerta SNS de queda:', snsError);
+        }
+      }
+
+      // Verificar sinais vitais críticos
+      const alertasVitais: string[] = [];
+
+      if (sensorData.frequencia_cardiaca) {
+        if (sensorData.frequencia_cardiaca < 40) {
+          alertasVitais.push(`⚠️ Bradicardia severa: ${sensorData.frequencia_cardiaca} bpm (normal: 60-100)`);
+        } else if (sensorData.frequencia_cardiaca > 120) {
+          alertasVitais.push(`⚠️ Taquicardia severa: ${sensorData.frequencia_cardiaca} bpm (normal: 60-100)`);
+        }
+      }
+
+      if (sensorData.saturacao_oxigenio) {
+        if (sensorData.saturacao_oxigenio < 90) {
+          alertasVitais.push(`⚠️ Hipoxemia: ${sensorData.saturacao_oxigenio}% (normal: >95%)`);
+        }
+      }
+
+      if (sensorData.temperatura) {
+        if (sensorData.temperatura > 38) {
+          alertasVitais.push(`⚠️ Febre: ${sensorData.temperatura}°C (normal: 36-37.5°C)`);
+        } else if (sensorData.temperatura < 35) {
+          alertasVitais.push(`⚠️ Hipotermia: ${sensorData.temperatura}°C (normal: 36-37.5°C)`);
+        }
+      }
+
+      // Enviar alerta SNS se houver sinais vitais críticos
+      if (alertasVitais.length > 0) {
+        console.log(`🚨 Sinais vitais críticos detectados para paciente ${patient.id}`);
+        
+        const mensagem = `
+⚠️ ALERTA DE SINAIS VITAIS CRÍTICOS - DSIM
+
+Paciente: ${patient.nome}
+ID: ${patient.id}
+Data/Hora: ${new Date().toLocaleString('pt-BR')}
+
+ALERTAS DETECTADOS:
+${alertasVitais.join('\n')}
+
+Sinais vitais atuais:
+${sensorData.frequencia_cardiaca ? `• Frequência Cardíaca: ${sensorData.frequencia_cardiaca} bpm` : ''}
+${sensorData.saturacao_oxigenio ? `• Saturação de O2: ${sensorData.saturacao_oxigenio}%` : ''}
+${sensorData.temperatura ? `• Temperatura: ${sensorData.temperatura}°C` : ''}
+
+⚠️ Verificação recomendada!
+
+Contato de emergência: ${patient.contatoEmergencia?.telefone || 'Não cadastrado'}
+        `.trim();
+
+        try {
+          await sendCustomAlert(
+            `⚠️ SINAIS VITAIS CRÍTICOS - ${patient.nome}`,
+            mensagem
+          );
+          
+          emitAlert(patient.id, 'vital-critical', {
+            patientId: patient.id,
+            patientName: patient.nome,
+            message: alertasVitais.join(', '),
+            ...sensorData,
+          });
+        } catch (snsError) {
+          console.error('Erro ao enviar alerta SNS de sinais vitais:', snsError);
+        }
+      }
+
+      // Verificar status do dispositivo
+      if (sensorData.status) {
+        emitDeviceStatus(patient.id, sensorData.status);
+      }
+
+      res.json({ 
+        message: 'Dados recebidos e processados com sucesso', 
+        patientId: patient.id,
+        alertas: alertasVitais.length > 0 ? alertasVitais : undefined
+      });
+    } catch (error) {
+      console.error('❌ Erro ao processar dados do IoT:', error);
+      res.status(500).json({ message: 'Erro ao processar dados do IoT' });
+    }
+  }
+);
+
+// Todas as rotas de pacientes ABAIXO requerem autenticação
 router.use(authMiddleware);
 
 // Listar todos os pacientes (filtrado por usuário)
@@ -332,169 +495,6 @@ router.post(
     } catch (error) {
       console.error('Erro ao vincular dispositivo:', error);
       res.status(500).json({ message: 'Erro ao vincular dispositivo' });
-    }
-  }
-);
-
-// Endpoint para receber dados do IoT Core via Lambda/API Gateway
-router.post(
-  '/iot/data',
-  async (req: AuthRequest, res: Response): Promise<void> => {
-    try {
-      const sensorData = req.body;
-      const { deviceId } = sensorData;
-
-      if (!deviceId) {
-        res.status(400).json({ message: 'deviceId é obrigatório' });
-        return;
-      }
-
-      // Buscar paciente pelo deviceId
-      const result = await dynamoDB.send(
-        new ScanCommand({
-          TableName: TABLES.PATIENTS,
-          FilterExpression: 'deviceId = :deviceId',
-          ExpressionAttributeValues: {
-            ':deviceId': deviceId,
-          },
-        })
-      );
-
-      const patient = result.Items?.[0];
-      
-      if (!patient) {
-        console.warn(`Dispositivo ${deviceId} não está vinculado a nenhum paciente`);
-        res.status(404).json({ message: 'Paciente não encontrado para este dispositivo' });
-        return;
-      }
-
-      // Emitir atualização de sinais vitais via WebSocket
-      emitVitalUpdate(patient.id, {
-        patientId: patient.id,
-        patientName: patient.nome,
-        deviceId,
-        ...sensorData,
-        timestamp: Date.now(),
-      });
-
-      // Verificar alertas
-      if (sensorData.panico_ativo) {
-        console.log(`🚨 Pânico detectado para paciente ${patient.id}`);
-        
-        // Emitir alerta via WebSocket
-        emitAlert(patient.id, 'panic', {
-          patientId: patient.id,
-          patientName: patient.nome,
-          message: 'Botão de pânico acionado!',
-          ...sensorData,
-        });
-
-        // Enviar notificação SNS
-        try {
-          await sendPanicAlert(patient as any, sensorData);
-        } catch (snsError) {
-          console.error('Erro ao enviar alerta SNS de pânico:', snsError);
-        }
-      }
-
-      if (sensorData.queda_detectada) {
-        console.log(`⚠️ Queda detectada para paciente ${patient.id}`);
-        
-        // Emitir alerta via WebSocket
-        emitAlert(patient.id, 'fall', {
-          patientId: patient.id,
-          patientName: patient.nome,
-          message: 'Queda detectada!',
-          ...sensorData,
-        });
-
-        // Enviar notificação SNS
-        try {
-          await sendFallAlert(patient as any, sensorData);
-        } catch (snsError) {
-          console.error('Erro ao enviar alerta SNS de queda:', snsError);
-        }
-      }
-
-      // Verificar sinais vitais críticos
-      const alertasVitais: string[] = [];
-
-      if (sensorData.frequencia_cardiaca) {
-        if (sensorData.frequencia_cardiaca < 40) {
-          alertasVitais.push(`⚠️ Bradicardia severa: ${sensorData.frequencia_cardiaca} bpm (normal: 60-100)`);
-        } else if (sensorData.frequencia_cardiaca > 120) {
-          alertasVitais.push(`⚠️ Taquicardia severa: ${sensorData.frequencia_cardiaca} bpm (normal: 60-100)`);
-        }
-      }
-
-      if (sensorData.saturacao_oxigenio) {
-        if (sensorData.saturacao_oxigenio < 90) {
-          alertasVitais.push(`⚠️ Hipoxemia: ${sensorData.saturacao_oxigenio}% (normal: >95%)`);
-        }
-      }
-
-      if (sensorData.temperatura) {
-        if (sensorData.temperatura > 38) {
-          alertasVitais.push(`⚠️ Febre: ${sensorData.temperatura}°C (normal: 36-37.5°C)`);
-        } else if (sensorData.temperatura < 35) {
-          alertasVitais.push(`⚠️ Hipotermia: ${sensorData.temperatura}°C (normal: 36-37.5°C)`);
-        }
-      }
-
-      // Enviar alerta SNS se houver sinais vitais críticos
-      if (alertasVitais.length > 0) {
-        console.log(`🚨 Sinais vitais críticos detectados para paciente ${patient.id}`);
-        
-        const mensagem = `
-⚠️ ALERTA DE SINAIS VITAIS CRÍTICOS - DSIM
-
-Paciente: ${patient.nome}
-ID: ${patient.id}
-Data/Hora: ${new Date().toLocaleString('pt-BR')}
-
-ALERTAS DETECTADOS:
-${alertasVitais.join('\n')}
-
-Sinais vitais atuais:
-${sensorData.frequencia_cardiaca ? `• Frequência Cardíaca: ${sensorData.frequencia_cardiaca} bpm` : ''}
-${sensorData.saturacao_oxigenio ? `• Saturação de O2: ${sensorData.saturacao_oxigenio}%` : ''}
-${sensorData.temperatura ? `• Temperatura: ${sensorData.temperatura}°C` : ''}
-
-⚠️ Verificação recomendada!
-
-Contato de emergência: ${patient.contatoEmergencia?.telefone || 'Não cadastrado'}
-        `.trim();
-
-        try {
-          await sendCustomAlert(
-            `⚠️ SINAIS VITAIS CRÍTICOS - ${patient.nome}`,
-            mensagem
-          );
-          
-          // Também emitir alerta via WebSocket
-          emitAlert(patient.id, 'vital-critical', {
-            patientId: patient.id,
-            patientName: patient.nome,
-            message: alertasVitais.join(', '),
-            ...sensorData,
-          });
-        } catch (snsError) {
-          console.error('Erro ao enviar alerta SNS de sinais vitais:', snsError);
-        }
-      }
-
-      // Verificar status do dispositivo
-      if (sensorData.status) {
-        emitDeviceStatus(patient.id, sensorData.status);
-      }
-
-      res.json({ 
-        message: 'Dados recebidos e processados', 
-        patientId: patient.id 
-      });
-    } catch (error) {
-      console.error('Erro ao processar dados do IoT:', error);
-      res.status(500).json({ message: 'Erro ao processar dados do IoT' });
     }
   }
 );
