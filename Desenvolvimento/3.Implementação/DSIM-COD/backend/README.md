@@ -96,15 +96,12 @@ backend/
 │   ├── src/
 │   │   └── index.ts            # Lambda MEWS Processor
 │   ├── package.json
-│   ├── tsconfig.json
-│   └── CRIAR_LAMBDA.md         # Guia de deploy Lambda
+│   └── tsconfig.json
 ├── scripts/
 │   └── setup-dynamodb.sh       # Script de criação de tabelas
 ├── package.json
 ├── tsconfig.json
 ├── .env.example
-├── DEPLOYMENT_GUIDE.md         # Guia de implantação completo
-├── QUICK_REFERENCE.md          # Referência rápida de comandos
 └── README.md
 ```
 
@@ -190,7 +187,7 @@ DYNAMODB_CONNECTIONS_TABLE=DSIM_Connections
 
 **⚠️ Importante:** As tabelas DynamoDB já foram criadas na AWS.
 
-Caso precise recriá-las, consulte `DEPLOYMENT_GUIDE.md` para os comandos AWS CLI ou use o Console AWS:
+Caso precise recriá-las, use o Console AWS ou comandos AWS CLI:
 
 - DSIM_Users
 - DSIM_Patients
@@ -518,8 +515,6 @@ Configurações personalizadas de alarmes por paciente.
 
 Gerencia conexões WebSocket ativas.
 
-Consulte `DEPLOYMENT_GUIDE.md` para detalhes de criação e índices.
-
 ---
 
 ## 🧪 Testes
@@ -559,9 +554,7 @@ Testa os seguintes endpoints:
 
 ### AWS Lambda (Function Processor)
 
-Consulte `lambda/CRIAR_LAMBDA.md` para deploy da função Lambda.
-
-**Resumo:**
+**Deploy da Lambda:**
 1. Compile: `cd lambda && npm run build`
 2. Empacote: `npm run package`
 3. Faça upload de `lambda-function.zip` no Console AWS
@@ -631,12 +624,10 @@ app.use(cors({
 
 ## 📚 Documentação Adicional
 
-- **[DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md)**: Guia completo de deploy AWS
-- **[QUICK_REFERENCE.md](QUICK_REFERENCE.md)**: Comandos rápidos e cheatsheet
-- **[lambda/CRIAR_LAMBDA.md](lambda/CRIAR_LAMBDA.md)**: Deploy da Lambda Function
-- **Frontend README**: `../frontend/README.md`
+## 📚 Documentação Adicional
 
----
+- **Frontend README**: `../frontend/README.md`
+- **Main README**: `../../../../README.md`
 
 ## 👥 Suporte
 
