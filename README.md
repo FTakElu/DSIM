@@ -1,64 +1,59 @@
 # DSIM - Dispositivo de Segurança Inteligente para Monitoramento
-## (Intelligent Security Device for Monitoring)
 
-![NodeJS](https://img.shields.io/badge/node.js-6DA55F?style=for-the-badge&logo=node.js&logoColor=white) ![Express.js](https://img.shields.io/badge/express.js-%23404d59.svg?style=for-the-badge&logo=express&logoColor=%2361DAFB) ![TypeScript](https://img.shields.io/badge/typescript-%23007ACC.svg?style=for-the-badge&logo=typescript&logoColor=white) ![React](https://img.shields.io/badge/react-%2320232a.svg?style=for-the-badge&logo=react&logoColor=%2361DAFB) ![Arduino](https://img.shields.io/badge/-Arduino-00979D?style=for-the-badge&logo=Arduino&logoColor=white) ![C++](https://img.shields.io/badge/c++-%2300599C.svg?style=for-the-badge&logo=c%2B%2B&logoColor=white) ![AmazonDynamoDB](https://img.shields.io/badge/Amazon%20DynamoDB-4053D6?style=for-the-badge&logo=Amazon%20DynamoDB&logoColor=white) ![AWS](https://img.shields.io/badge/AWS-%23FF9900.svg?style=for-the-badge&logo=amazon-aws&logoColor=white)
+![NodeJS](https://img.shields.io/badge/node.js-6DA55F?style=for-the-badge&logo=node.js&logoColor=white) ![Express.js](https://img.shields.io/badge/express.js-%23404d59.svg?style=for-the-badge&logo=express&logoColor=%2361DAFB) ![TypeScript](https://img.shields.io/badge/typescript-%23007ACC.svg?style=for-the-badge&logo=typescript&logoColor=white) ![React](https://img.shields.io/badge/react-%2320232a.svg?style=for-the-badge&logo=react&logoColor=%2361DAFB) ![Arduino](https://img.shields.io/badge/-Arduino-00979D?style=for-the-badge&logo=Arduino&logoColor=white) ![AWS](https://img.shields.io/badge/AWS-%23FF9900.svg?style=for-the-badge&logo=amazon-aws&logoColor=white) ![Socket.io](https://img.shields.io/badge/Socket.io-black?style=for-the-badge&logo=socket.io&badgeColor=010101)
 
 ![ProjectLogo](https://github.com/FTakElu/DSIM/blob/6a314038459ba6172102d95c006211f7e44ce688/Desenvolvimento/3.Implementa%C3%A7%C3%A3o/DSIM-COD/DSIM/public/images/DSIM_logoExtensa.png?raw=true)
 
-## 📌 Sobre o DSIM
+## 📌 Sobre o Projeto
 
-Como parte de um trabalho de conclusão de curso em Ciência da Computação no Instituto Federal de São Paulo – Campus Salto, o projeto DSIM (Dispositivo de Segurança Inteligente para Monitoramento) consiste no desenvolvimento de uma solução wearable que compreende uma pulseira inteligente integrada a uma plataforma web, projetada para monitorar usuários que possam estar em situações de risco ou vulnerabilidade.
+Trabalho de Conclusão de Curso em Ciência da Computação desenvolvido no **Instituto Federal de São Paulo – Campus Salto**.
 
-O sistema monitora continuamente sinais vitais, localização e movimento, emitindo alertas automáticos através de seus recursos inteligentes quando necessário. Ao fornecer dados em tempo real tanto para os usuários quanto para seus cuidadores ou familiares, o DSIM promove maior segurança e autonomia, permite respostas mais rápidas em situações críticas e melhora a qualidade geral do atendimento assistido.
+O **DSIM** (Dispositivo de Segurança Inteligente para Monitoramento) é uma solução completa para monitoramento remoto de sinais vitais, composta por:
+
+- 🩺 **Pulseira IoT** (ESP8266 + sensores) que coleta batimentos cardíacos, SpO2 e temperatura
+- ☁️ **Infraestrutura AWS** com IoT Core, DynamoDB, Lambda, EC2 e SNS
+- 💻 **Dashboard Web** em React com monitoramento em tempo real via WebSocket
+- 📱 **Alertas por SMS/Email** para situações críticas usando AWS SNS
+
+**Objetivo:** Promover segurança e autonomia para pessoas em situações de vulnerabilidade, permitindo respostas rápidas em emergências médicas.
 
 ## ☁️ Infraestrutura AWS em Produção
 
-O sistema DSIM está hospedado completamente na AWS (Amazon Web Services) com os seguintes recursos ativos:
+### Recursos Ativos
 
-### Recursos Principais
+| Recurso | Identificador | URL/Função |
+|---------|---------------|------------|
+| **EC2 Instance** | `i-0019770d6275005b2` | Backend Node.js + PM2 (t2.micro) |
+| **Elastic IP** | `98.95.251.71` | IP público fixo |
+| **API Gateway** | `87xx2k2vn5` | `https://87xx2k2vn5.execute-api.us-east-1.amazonaws.com` |
+| **SNS Topic** | `DSIM-Alertas` | `arn:aws:sns:us-east-1:565757789330:DSIM-Alertas` |
+| **Lambda** | `DSIM-MEWS-Processor` | Processa streams e calcula MEWS |
+| **IoT Thing** | `Pulseira_001` | Dispositivo registrado no IoT Core |
+| **Amplify** | (branch `main`) | Frontend React auto-deploy |
 
-| Recurso | ID/Identificador | Função |
-|---------|------------------|--------|
-| **EC2 Instance** | `i-0019770d6275005b2` | Servidor rodando backend Node.js com PM2 (t2.micro) |
-| **Elastic IP** | `98.95.251.71` | IP público fixo da EC2 (não muda após reiniciar) |
-| **API Gateway** | `87xx2k2vn5` | HTTP API que faz proxy entre frontend e backend |
-| **Security Group** | `sg-0f38c9d3a91bd3473` | Firewall com portas 22, 80, 443, 9999 abertas |
-| **Lambda Function** | `DSIM-MEWS-Processor` | Calcula score MEWS e processa alarmes automaticamente |
-| **IoT Thing** | `Pulseira_DSIM` | Dispositivo IoT registrado para comunicação MQTT |
-| **Region** | `us-east-1` | Região AWS (Virgínia do Norte) |
+### DynamoDB (5 tabelas)
 
-### DynamoDB Tables (5 tabelas ativas)
+- **DSIM_Users**: Usuários do sistema
+- **DSIM_Patients**: Pacientes monitorados (com `deviceId`)
+- **DSIM_SensorData**: Leituras IoT (Stream → Lambda)
+- **DSIM_Alarms**: Alarmes personalizados
+- **DSIM_Connections**: WebSocket connections
 
-| Tabela | Chave Primária | Função | Recursos Especiais |
-|--------|----------------|--------|-------------------|
-| **DSIM_Users** | `userId` | Armazena usuários do sistema | - |
-| **DSIM_Patients** | `patientId` | Dados dos pacientes monitorados | GSI: `deviceId-index` |
-| **DSIM_SensorData** | `deviceId` + `timestamp` | Histórico de leituras das pulseiras | DynamoDB Stream (trigger Lambda) |
-| **DSIM_Alarms** | `pacienteId` | Configurações de alarmes personalizados | - |
-| **DSIM_Connections** | `connectionId` | Gerencia conexões WebSocket ativas | TTL habilitado |
+### Endpoints Públicos
 
-### Endpoints Ativos
+- **Backend direto**: `http://98.95.251.71:9999`
+- **API Gateway (prod)**: `https://87xx2k2vn5.execute-api.us-east-1.amazonaws.com`
+- **WebSocket**: `ws://98.95.251.71:9999` (Socket.io)
+- **IoT MQTT**: `a2cs805qynf1nj-ats.iot.us-east-1.amazonaws.com:8883`
 
-- **Backend (EC2)**: `http://98.95.251.71:9999`
-- **API Gateway**: `https://87xx2k2vn5.execute-api.us-east-1.amazonaws.com`
-- **AWS IoT Endpoint**: `a2cs805qynf1nj-ats.iot.us-east-1.amazonaws.com`
-- **Frontend (Amplify)**: *A configurar*
+### 🔄 Atualizar Credenciais AWS (Academy)
 
-### 🔑 Gerenciamento de Credenciais (AWS Academy)
-
-O projeto utiliza AWS Academy, que gera **credenciais temporárias com validade de 2-4 horas**. 
-
-Para atualizar as credenciais automaticamente na EC2:
+Credenciais expiram a cada **2-4 horas**. Use o script automático:
 
 ```cmd
-# 1. Atualizar credenciais localmente
-aws configure  # Colar novas credenciais da sessão AWS Academy
-
-# 2. Executar script automático
-update_ec2_credentials.bat  # Atualiza .env na EC2 e reinicia backend
+aws configure  # Colar novas credenciais AWS Academy
+update_ec2_credentials.bat  # Atualiza EC2 e reinicia PM2
 ```
-
-**Arquivo responsável**: `update_ec2_credentials.bat` (raiz do projeto)
 
 ## 🏗️ Arquitetura do Sistema
 
@@ -73,72 +68,69 @@ update_ec2_credentials.bat  # Atualiza .env na EC2 e reinicia backend
                                     ▼
                             ┌─────────────────┐
                             │     Lambda      │
-                            │   Processor     │
-                            │  (MEWS, Alerts) │
+                            │  MEWS Processor │
+                            │  + SNS Alerts   │
                             └────────┬────────┘
                                      │
                     ┌────────────────┼────────────────┐
                     ▼                ▼                ▼
             ┌──────────────┐  ┌──────────────┐  ┌──────────────┐
-            │  DynamoDB    │  │  DynamoDB    │  │  WebSocket   │
-            │   Patients   │  │    Alarms    │  │   Server     │
-            └──────┬───────┘  └──────┬───────┘  └──────┬───────┘
-                   │                 │                  │
-                   └─────────┬───────┘                  │
-                             ▼                          │
-                   ┌─────────────────┐                 │
-                   │  Backend API    │                 │
-                   │  Node.js/Express│◀────────────────┘
-                   │   (Port 9999)   │
+            │  DynamoDB    │  │  AWS SNS     │  │  WebSocket   │
+            │   Patients   │  │  (SMS/Email) │  │  (Socket.io) │
+            └──────┬───────┘  └──────────────┘  └──────┬───────┘
+                   │                                    │
+                   └─────────┬──────────────────────────┘
+                             ▼
+                   ┌─────────────────┐
+                   │  Backend API    │
+                   │  Node.js/Express│
+                   │   (EC2 + PM2)   │
                    └────────┬────────┘
-                            │ HTTP/REST
+                            │
                             ▼
                    ┌─────────────────┐
                    │   Frontend      │
                    │  React + Vite   │
-                   │  (Port 5173)    │
+                   │  (AWS Amplify)  │
                    └─────────────────┘
 ```
 
-## 🚀 Funcionalidades
+## 🚀 Funcionalidades Implementadas
 
 ### Pulseira IoT (ESP8266)
-- ✅ **Monitoramento de Sinais Vitais**: Rastreamento em tempo real de frequência cardíaca, temperatura corporal e oxigenação sanguínea (SpO₂)
-- ✅ **Botão de Pânico**: Acionamento manual de alertas de emergência
-- ✅ **Comunicação Segura**: Conexão TLS/SSL com AWS IoT Core via MQTT
-- ✅ **Envio Automático**: Dados transmitidos a cada 10 segundos
-- ✅ **Reconexão Automática**: Recuperação automática de quedas de conexão
+- ✅ **Monitoramento Contínuo**: FC, SpO2 e temperatura a cada 10s
+- ✅ **Botão de Pânico**: Acionamento manual de emergência
+- ✅ **Comunicação Segura**: TLS 1.2 com certificados X.509
+- ✅ **Reconexão Automática**: Recupera de quedas de conexão
 
-### Backend (Node.js/Express)
-- ✅ **API RESTful**: Endpoints para pacientes, alarmes, histórico e autenticação
-- ✅ **CRUD Completo**: Create, Read, Update, Delete para gerenciamento de pacientes
-- ✅ **Gestão de Dispositivos IoT**: Endpoint para listar pulseiras disponíveis e atribuí-las
-- ✅ **Autenticação JWT**: Login seguro com tokens de 24 horas
-- ✅ **Cálculo MEWS**: Modified Early Warning Score automático baseado em sinais vitais
-- ✅ **WebSocket**: Alertas em tempo real para o frontend (porta 8080)
-- ✅ **Integração AWS**: DynamoDB, IoT Core e Lambda
-- ✅ **Validações**: Verificação de dados de entrada e tratamento de erros
-
-### Lambda Processor
-- ✅ **Processamento de Stream**: Analisa dados do DynamoDB Stream
-- ✅ **Detecção de Anomalias**: Verifica limites de alarmes configurados
-- ✅ **Cálculo de Score**: MEWS baseado em sinais vitais
-- ✅ **Notificações**: Envia alertas via WebSocket quando necessário
+### Backend (Node.js + TypeScript)
+- ✅ **API RESTful**: CRUD completo de pacientes
+- ✅ **Autenticação JWT**: Login seguro com bcrypt
+- ✅ **WebSocket em Tempo Real**: Socket.io para alertas instantâneos
+- ✅ **Alertas SNS**: SMS/Email para sinais vitais críticos
+- ✅ **Endpoint IoT Público**: `/api/pacientes/iot/data` (sem JWT)
+- ✅ **Cálculo MEWS**: Modified Early Warning Score automático
+- ✅ **Thresholds de Alerta**:
+  - Bradicardia: FC < 40 bpm
+  - Taquicardia: FC > 120 bpm
+  - Hipoxemia: SpO2 < 90%
+  - Febre: Temp > 38°C
+  - Hipotermia: Temp < 35°C
 
 ### Frontend (React + TypeScript)
-- ✅ **Dashboard de Pacientes**: Visualização em cards com dados em tempo real
-- ✅ **Sistema de Cores Inteligente**: 
-  - 🟢 Verde: Sinais vitais normais
-  - 🟡 Amarelo: Valores próximos aos limites (atenção)
-  - 🔴 Vermelho: Valores críticos excedendo limites
-- ✅ **Cadastro Completo**: Formulário com upload de foto, dados pessoais, contato de emergência e histórico médico
-- ✅ **Edição de Pacientes**: Atualização de dados com formulário pré-preenchido
-- ✅ **Exclusão Segura**: Remoção de pacientes com confirmação
-- ✅ **Gestão de Dispositivos**: Atribuição e visualização de pulseiras IoT disponíveis
-- ✅ **Histórico Visual**: Gráficos interativos de sinais vitais
-- ✅ **Alertas em Tempo Real**: Notificações via WebSocket
-- ✅ **Configuração de Alarmes**: Limites personalizados por paciente com base em MEWS
-- ✅ **Interface Responsiva**: Adaptável para desktop, tablet e mobile
+- ✅ **Dashboard Interativo**: Cards com dados em tempo real
+- ✅ **Sistema de Cores**: 🟢 Normal | 🟡 Atenção | 🔴 Crítico
+- ✅ **Notificações Toast**: react-toastify para alertas visuais
+- ✅ **Cadastro Completo**: Upload de foto, dados médicos, emergência
+- ✅ **Histórico com Gráficos**: Visualização de tendências
+- ✅ **Alarmes Personalizados**: Limites ajustáveis por paciente
+- ✅ **Responsivo**: Mobile, tablet e desktop
+
+### AWS Lambda
+- ✅ **Trigger DynamoDB Stream**: Processamento automático
+- ✅ **Cálculo MEWS**: Score de alerta precoce
+- ✅ **Detecção de Anomalias**: Verifica limites configurados
+- ✅ **Atualização de Pacientes**: Sincroniza dados em tempo real
 
 ## 📁 Estrutura do Projeto
 
@@ -345,82 +337,15 @@ O projeto inclui um script que **atualiza automaticamente** as credenciais AWS n
 
 ---
 
-## 🚀 Como o Sistema Funciona
+## 💻 Desenvolvimento Local
 
-### Fluxo Completo de Dados
+Consulte os READMEs específicos para executar localmente:
 
-```
-1. Pulseira IoT (ESP8266)
-   └─> Coleta sinais vitais (BPM, SpO2, Temperatura)
-   └─> Publica via MQTT/TLS no tópico "pulseira/dados"
-        ↓
-2. AWS IoT Core
-   └─> Recebe mensagem MQTT
-   └─> Regra IoT adiciona timestamp
-   └─> Insere no DynamoDB (tabela SensorData)
-        ↓
-3. DynamoDB Stream
-   └─> Dispara Lambda automaticamente
-        ↓
-4. Lambda Function (DSIM-MEWS-Processor)
-   └─> Calcula score MEWS
-   └─> Verifica alarmes configurados
-   └─> Atualiza tabela Patients
-   └─> Envia alerta via WebSocket (se necessário)
-        ↓
-5. Backend API (EC2)
-   └─> Serve dados via API REST
-   └─> Mantém conexões WebSocket
-        ↓
-6. API Gateway
-   └─> Faz proxy das requisições
-   └─> Frontend ←→ Backend
-        ↓
-7. Frontend (Amplify)
-   └─> Exibe dados em tempo real
-   └─> Atualiza interface automaticamente
-```
+- **Backend**: `cd backend && npm install && npm run dev` (porta 9999)
+- **Frontend**: `cd frontend && npm install && npm run dev` (porta 5173)
+- **ESP8266**: Configure WiFi no Arduino IDE, certificados já incluídos
 
----
-
-## 💻 Desenvolvimento Local (Opcional)
-
-Se quiser rodar o sistema localmente para testes ou desenvolvimento:
-
-### Backend Local
-
-```bash
-cd "Desenvolvimento/3.Implementação/DSIM-COD/backend"
-npm install
-
-# Criar arquivo .env com suas credenciais AWS
-# (Ver backend/README.md para detalhes)
-
-npm run dev  # Roda na porta 9999
-```
-
-### Frontend Local
-
-```bash
-cd "Desenvolvimento/3.Implementação/DSIM-COD/frontend"
-npm install
-
-# Configurar URL da API em src/service/api.ts
-# Para usar backend de produção:
-# baseURL: 'https://87xx2k2vn5.execute-api.us-east-1.amazonaws.com'
-
-npm run dev  # Roda na porta 5173
-```
-
-### Pulseira IoT (Arduino/ESP8266)
-
-1. Abra `Desenvolvimento/3.Implementação/DSIM-INO/PulseiraMonitoramentoPT1.ino` no Arduino IDE
-2. Configure seu WiFi (linhas 8-9)
-3. Os certificados AWS já estão no código
-4. Compile e faça upload para o ESP8266
-5. Abra o Serial Monitor (115200 baud) para ver os dados sendo enviados
-
-Detalhes completos em: `DSIM-INO/README.md`
+Detalhes completos nos READMEs de cada módulo.
 
 ---
 
@@ -481,158 +406,115 @@ Cada componente tem sua própria documentação completa:
 - **Pulseira IoT**: `Desenvolvimento/3.Implementação/DSIM-INO/README.md`
 - **Guia de Deploy**: `GUIA_DEPLOY.md`
 
-## 🧪 Testando o Sistema
+## 🧪 Como Testar o Sistema
 
-### Script de Gerenciamento AWS
-
-O projeto inclui um script essencial para gerenciar as credenciais AWS Academy:
-
-| Script | Descrição |
-|--------|-----------|
-| `update_ec2_credentials.bat` | Atualiza automaticamente as credenciais AWS na EC2 quando sessão AWS Academy expira |
-
-**Como usar:**
-
-```cmd
-# Quando iniciar nova sessão AWS Academy (a cada 2-4h):
-aws configure  # Colar novas credenciais da AWS Academy
-update_ec2_credentials.bat  # Atualizar automaticamente na EC2
-```
-
-### 1. Backend
+### 1. Testar Backend (Health Check)
 
 ```bash
-cd backend
-node test-api.js
+# Via API Gateway (produção)
+curl https://87xx2k2vn5.execute-api.us-east-1.amazonaws.com/health
+
+# Resposta esperada: {"status":"OK","timestamp":"..."}
 ```
 
-Você deve ver:
-- ✅ Health check: OK
-- ✅ Registro: Status 201
-- ✅ Login: Status 200 com token JWT
-
-### 2. IoT → DynamoDB
+### 2. Criar Usuário e Paciente
 
 ```bash
-aws dynamodb scan --table-name DSIM_SensorData --region us-east-1 --max-items 5
+# 1. Registrar usuário
+curl -X POST http://98.95.251.71:9999/api/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"nome":"Admin","email":"admin@dsim.com","senha":"senha123","role":"medico"}'
+
+# 2. Fazer login (obter token)
+curl -X POST http://98.95.251.71:9999/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"admin@dsim.com","senha":"senha123"}'
+
+# 3. Criar paciente (usar token do passo 2)
+curl -X POST http://98.95.251.71:9999/api/pacientes \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer SEU_TOKEN_AQUI" \
+  -d '{
+    "nome": "Paciente Teste",
+    "dataNascimento": "1980-01-01",
+    "genero": "M",
+    "telefone": "11999999999",
+    "deviceId": "Pulseira_001"
+  }'
 ```
 
-Deve retornar registros com `deviceId`, `timestamp`, `batimentos`, `oxigenio`, `temperatura`.
+### 3. Testar Envio de Dados IoT
 
-### 3. Frontend → Backend
+```bash
+# Simular dados da pulseira (valores críticos)
+curl -X POST http://98.95.251.71:9999/api/pacientes/iot/data \
+  -H "Content-Type: application/json" \
+  -d '{
+    "deviceId": "Pulseira_001",
+    "frequencia_cardiaca": 130,
+    "saturacao_oxigenio": 85,
+    "temperatura": 39.5,
+    "bateria": 70,
+    "status": "ligado"
+  }'
 
-1. Acesse http://localhost:5173
-2. Faça login com as credenciais criadas
-3. Cadastre um paciente
-4. Vincule o device `Pulseira_DSIM` ao paciente
-5. Veja os dados em tempo real no dashboard
-
-## 📊 Fluxo de Dados Completo
-
+# Verificar logs do PM2
+ssh -i CERTIFICADOS/dsim_keypair.pem ec2-user@98.95.251.71
+pm2 logs dsim-backend --lines 50
 ```
-1. ESP8266 coleta sensores (BPM, SpO2, Temp)
-   ↓
-2. Publica via MQTT no tópico "pulseira/dados"
-   ↓
-3. AWS IoT Core recebe mensagem
-   ↓
-4. Regra IoT adiciona timestamp e insere no DynamoDB (SensorData)
-   ↓
-5. DynamoDB Stream dispara Lambda
-   ↓
-6. Lambda:
-   - Calcula MEWS
-   - Verifica alarmes
-   - Atualiza tabela Patients
-   - Envia alerta via WebSocket (se necessário)
-   ↓
-7. Backend API disponibiliza dados via REST
-   ↓
-8. Frontend exibe em tempo real no Dashboard
+
+### 4. Subscrever Alertas SNS
+
+```bash
+# Adicionar email para receber SMS/email de alertas
+aws sns subscribe \
+  --topic-arn arn:aws:sns:us-east-1:565757789330:DSIM-Alertas \
+  --protocol email \
+  --notification-endpoint seu-email@exemplo.com
+
+# Confirmar inscrição no email recebido
 ```
+
+### 5. Testar Frontend
+
+1. Acesse a URL do Amplify após deploy
+2. Faça login com `admin@dsim.com` / `senha123`
+3. Veja o paciente criado no dashboard
+4. Envie dados críticos via curl (passo 3)
+5. Observe toast de alerta aparecer em tempo real
+
+## 🛠️ Tecnologias Utilizadas
+
+- **IoT**: ESP8266, MQTT/TLS, MAX30102, MLX90614
+- **Backend**: Node.js 18+, TypeScript, Express, Socket.io, bcrypt, JWT
+- **AWS**: IoT Core, DynamoDB, Lambda, EC2, SNS, API Gateway, Amplify
+- **Frontend**: React 18, TypeScript, Vite, Axios, react-toastify
+
+## 📚 Documentação Detalhada
+
+- **[Backend README](Desenvolvimento/3.Implementação/DSIM-COD/backend/README.md)**: API, endpoints, configuração
+- **[Frontend README](Desenvolvimento/3.Implementação/DSIM-COD/frontend/README.md)**: Componentes, páginas, deploy
+- **[Firmware IoT README](Desenvolvimento/3.Implementação/DSIM-INO/README.md)**: ESP8266, sensores, certificados
 
 ## 🔐 Segurança
 
-- **TLS/SSL**: Todas as comunicações criptografadas
-- **Certificados X.509**: Autenticação mútua dispositivo ↔ AWS
-- **JWT**: Tokens com expiração de 24h
-- **Bcrypt**: Senhas hasheadas com salt
-- **CORS**: Configurado para permitir apenas origens confiáveis
-- **AWS IAM**: Políticas de menor privilégio
-
-## 🧩 Tecnologias Utilizadas
-
-### Backend
-- Node.js 18+ com TypeScript
-- Express 4.18 (API REST)
-- WebSocket (ws) - Alertas em tempo real
-- AWS SDK v3 (DynamoDB, IoT)
-- JWT (jsonwebtoken)
-- Bcrypt (criptografia de senhas)
-
-### Frontend
-- React 18
-- TypeScript
-- Vite (build tool)
-- Axios (cliente HTTP)
-- CSS Modules
-- WebSocket API
-
-### IoT
-- ESP8266 Arduino Core
-- PubSubClient (MQTT)
-- ArduinoJson
-- WiFiClientSecure (TLS)
-
-### AWS
-- **IoT Core**: MQTT broker, Thing registry, Rules
-- **DynamoDB**: 5 tabelas (SensorData, Patients, Users, Alarms, Connections)
-- **Lambda**: Processamento serverless
-- **CloudWatch**: Logs e monitoramento
-
-## 📚 Documentação Adicional
-
-- **Backend**: `Desenvolvimento/3.Implementação/DSIM-COD/backend/README.md`
-- **Frontend**: `Desenvolvimento/3.Implementação/DSIM-COD/frontend/README.md`
-- **IoT Firmware**: `Desenvolvimento/3.Implementação/DSIM-INO/README.md`
-- **Deployment**: `Desenvolvimento/3.Implementação/DSIM-COD/backend/DEPLOYMENT_GUIDE.md`
-- **API Reference**: `Desenvolvimento/3.Implementação/DSIM-COD/backend/QUICK_REFERENCE.md`
-
-## 🐛 Troubleshooting
-
-### Backend não conecta ao DynamoDB
-- Verifique credenciais AWS no `.env`
-- Confirme que `AWS_SESSION_TOKEN` está configurado (AWS Academy)
-- Certifique-se de que as tabelas existem
-
-### IoT não envia dados
-- Verifique conexão WiFi no Serial Monitor
-- Confirme endpoint do IoT Core no código
-- Verifique certificados (devem incluir BEGIN/END)
-
-### Frontend não carrega dados
-- Confirme que backend está rodando (porta 9999)
-- Verifique token JWT (deve estar válido)
-- Veja console do navegador (F12) para erros
-
-## ⚖️ Licença
-
-Este projeto é parte de um Trabalho de Conclusão de Curso (TCC) e está disponível para fins educacionais e de pesquisa. Para uso comercial ou redistribuição, entre em contato com o autor.
+- ✅ TLS 1.2 em todas as comunicações
+- ✅ Certificados X.509 para IoT
+- ✅ JWT com expiração 24h
+- ✅ Senhas hasheadas (bcrypt)
+- ✅ CORS configurado
+- ✅ Endpoint IoT público (sem JWT para dispositivos)
 
 ## 👥 Autores
 
 - **Flávia Alessandra Elugo da Silva** - Desenvolvedora Principal
-- **Gabriella Pereira Morais** - Desenvolvedora 
+- **Gabriella Pereira Morais** - Desenvolvedora
 - **Instituição**: Instituto Federal de São Paulo (IFSP) - Campus Salto
-
-## 🤝 Contribuições
-
-Este é um projeto acadêmico em desenvolvimento. Sugestões e feedback são bem-vindos através de Issues no GitHub.
 
 ## 📧 Contato
 
 - GitHub: [@FTakElu](https://github.com/FTakElu)
-- GitHub: [@Bagmor](https://github.com/Bagmor).
+- GitHub: [@Bagmor](https://github.com/Bagmor)
 
 ---
 
