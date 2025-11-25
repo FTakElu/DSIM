@@ -12,7 +12,7 @@ import { Response, Router } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import { dynamoDB, TABLES } from '../config/aws';
 import { authMiddleware } from '../middleware/auth';
-import { sendFallAlert, sendPanicAlert } from '../services/sns-service';
+import { sendCustomAlert, sendFallAlert, sendPanicAlert } from '../services/sns-service';
 import { AuthRequest, Patient } from '../types';
 import { emitAlert, emitDeviceStatus, emitVitalUpdate } from '../websocket';
 const snsClient = new SNSClient({ region: process.env.AWS_REGION });
@@ -413,6 +413,73 @@ router.post(
           await sendFallAlert(patient as any, sensorData);
         } catch (snsError) {
           console.error('Erro ao enviar alerta SNS de queda:', snsError);
+        }
+      }
+
+      // Verificar sinais vitais críticos
+      const alertasVitais: string[] = [];
+
+      if (sensorData.frequencia_cardiaca) {
+        if (sensorData.frequencia_cardiaca < 40) {
+          alertasVitais.push(`⚠️ Bradicardia severa: ${sensorData.frequencia_cardiaca} bpm (normal: 60-100)`);
+        } else if (sensorData.frequencia_cardiaca > 120) {
+          alertasVitais.push(`⚠️ Taquicardia severa: ${sensorData.frequencia_cardiaca} bpm (normal: 60-100)`);
+        }
+      }
+
+      if (sensorData.saturacao_oxigenio) {
+        if (sensorData.saturacao_oxigenio < 90) {
+          alertasVitais.push(`⚠️ Hipoxemia: ${sensorData.saturacao_oxigenio}% (normal: >95%)`);
+        }
+      }
+
+      if (sensorData.temperatura) {
+        if (sensorData.temperatura > 38) {
+          alertasVitais.push(`⚠️ Febre: ${sensorData.temperatura}°C (normal: 36-37.5°C)`);
+        } else if (sensorData.temperatura < 35) {
+          alertasVitais.push(`⚠️ Hipotermia: ${sensorData.temperatura}°C (normal: 36-37.5°C)`);
+        }
+      }
+
+      // Enviar alerta SNS se houver sinais vitais críticos
+      if (alertasVitais.length > 0) {
+        console.log(`🚨 Sinais vitais críticos detectados para paciente ${patient.id}`);
+        
+        const mensagem = `
+⚠️ ALERTA DE SINAIS VITAIS CRÍTICOS - DSIM
+
+Paciente: ${patient.nome}
+ID: ${patient.id}
+Data/Hora: ${new Date().toLocaleString('pt-BR')}
+
+ALERTAS DETECTADOS:
+${alertasVitais.join('\n')}
+
+Sinais vitais atuais:
+${sensorData.frequencia_cardiaca ? `• Frequência Cardíaca: ${sensorData.frequencia_cardiaca} bpm` : ''}
+${sensorData.saturacao_oxigenio ? `• Saturação de O2: ${sensorData.saturacao_oxigenio}%` : ''}
+${sensorData.temperatura ? `• Temperatura: ${sensorData.temperatura}°C` : ''}
+
+⚠️ Verificação recomendada!
+
+Contato de emergência: ${patient.contatoEmergencia?.telefone || 'Não cadastrado'}
+        `.trim();
+
+        try {
+          await sendCustomAlert(
+            `⚠️ SINAIS VITAIS CRÍTICOS - ${patient.nome}`,
+            mensagem
+          );
+          
+          // Também emitir alerta via WebSocket
+          emitAlert(patient.id, 'vital-critical', {
+            patientId: patient.id,
+            patientName: patient.nome,
+            message: alertasVitais.join(', '),
+            ...sensorData,
+          });
+        } catch (snsError) {
+          console.error('Erro ao enviar alerta SNS de sinais vitais:', snsError);
         }
       }
 
