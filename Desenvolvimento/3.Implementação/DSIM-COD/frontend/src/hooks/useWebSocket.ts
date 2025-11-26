@@ -54,7 +54,11 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
   const [lastAlert, setLastAlert] = useState<Alert | null>(null);
 
   useEffect(() => {
-    if (!autoConnect) return;
+    // Desabilitar WebSocket em produção por incompatibilidade HTTPS
+    if (!autoConnect || !WS_URL.startsWith('http://localhost')) {
+      console.log('⚠️ WebSocket desabilitado em produção (incompatibilidade HTTPS)');
+      return;
+    }
 
     // Criar conexão Socket.io usando apenas polling (HTTPS compatível)
     const socket = io(WS_URL, {
