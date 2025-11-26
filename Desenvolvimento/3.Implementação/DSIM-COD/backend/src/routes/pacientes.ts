@@ -230,7 +230,49 @@ router.get('/', async (req: AuthRequest, res: Response): Promise<void> => {
     );
 
     const patients = result.Items || [];
-    res.json(patients);
+    
+    // Para cada paciente, verificar dados recentes do sensor para atualizar status
+    const patientsWithStatus = await Promise.all(
+      patients.map(async (patient) => {
+        if (patient.deviceId) {
+          try {
+            // Buscar dados mais recentes do sensor (últimos 5 minutos)
+            const fiveMinutesAgo = Date.now() - (5 * 60 * 1000);
+            const sensorResult = await dynamoDB.send(
+              new ScanCommand({
+                TableName: TABLES.SENSOR_DATA,
+                FilterExpression: 'deviceId = :deviceId AND #ts > :timestamp',
+                ExpressionAttributeNames: {
+                  '#ts': 'timestamp',
+                },
+                ExpressionAttributeValues: {
+                  ':deviceId': patient.deviceId,
+                  ':timestamp': fiveMinutesAgo,
+                },
+                Limit: 1,
+              })
+            );
+            
+            // Se tem dados recentes, dispositivo está online
+            if (sensorResult.Items && sensorResult.Items.length > 0) {
+              patient.statusDispositivo = 'online';
+              patient.status = sensorResult.Items[0].status || 'online';
+            } else {
+              patient.statusDispositivo = 'offline';
+              patient.status = 'offline';
+            }
+          } catch (error) {
+            console.error(`Erro ao verificar status do dispositivo ${patient.deviceId}:`, error);
+            patient.statusDispositivo = 'offline';
+          }
+        } else {
+          patient.statusDispositivo = 'desligada';
+        }
+        return patient;
+      })
+    );
+    
+    res.json(patientsWithStatus);
   } catch (error) {
     console.error('Erro ao listar pacientes:', error);
     res.status(500).json({ message: 'Erro ao listar pacientes' });
