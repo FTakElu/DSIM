@@ -56,9 +56,9 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
   useEffect(() => {
     if (!autoConnect) return;
 
-    // Criar conexão Socket.io
+    // Criar conexão Socket.io usando apenas polling (HTTPS compatível)
     const socket = io(WS_URL, {
-      transports: ['websocket', 'polling'],
+      transports: ['polling'], // Apenas polling para compatibilidade HTTPS
       reconnection: true,
       reconnectionDelay: 1000,
       reconnectionAttempts: 5,
