@@ -25,7 +25,8 @@ O **DSIM** (Dispositivo de Segurança Inteligente para Monitoramento) é uma sol
 |---------|---------------|------------|
 | **EC2 Instance** | `i-0019770d6275005b2` | Backend Node.js + PM2 (t2.micro) |
 | **Elastic IP** | `98.95.251.71` | IP público fixo |
-| **API Gateway** | `87xx2k2vn5` | `https://87xx2k2vn5.execute-api.us-east-1.amazonaws.com` |
+| **API Gateway (HTTP)** | `87xx2k2vn5` | `https://87xx2k2vn5.execute-api.us-east-1.amazonaws.com` |
+| **API Gateway (WebSocket)** | `kzjolz71nl` | `wss://kzjolz71nl.execute-api.us-east-1.amazonaws.com/production` |
 | **SNS Topic** | `DSIM-Alertas` | `arn:aws:sns:us-east-1:565757789330:DSIM-Alertas` |
 | **Lambda** | `DSIM-MEWS-Processor` | Processa streams e calcula MEWS |
 | **IoT Thing** | `Pulseira_001` | Dispositivo registrado no IoT Core |
@@ -41,9 +42,9 @@ O **DSIM** (Dispositivo de Segurança Inteligente para Monitoramento) é uma sol
 
 ### Endpoints Públicos
 
-- **Backend direto**: `http://98.95.251.71:9999`
-- **API Gateway (prod)**: `https://87xx2k2vn5.execute-api.us-east-1.amazonaws.com`
-- **WebSocket**: `ws://98.95.251.71:9999` (Socket.io)
+- **Backend direto**: `http://98.95.251.71:9999` (apenas desenvolvimento)
+- **API Gateway HTTP**: `https://87xx2k2vn5.execute-api.us-east-1.amazonaws.com` (REST API)
+- **API Gateway WebSocket**: `wss://kzjolz71nl.execute-api.us-east-1.amazonaws.com/production` (tempo real)
 - **IoT MQTT**: `a2cs805qynf1nj-ats.iot.us-east-1.amazonaws.com:8883`
 
 ### 🔄 Atualizar Credenciais AWS (Academy)
