@@ -77,11 +77,6 @@ const PatientCard: React.FC<PatientCardProps> = ({ patient, onDelete }) => {
           <FaExclamationTriangle /> QUEDA DETECTADA
         </div>
       )}
-      {patient.statusDispositivo === 'offline' && (
-        <div className={styles.alertBanner} style={{backgroundColor: '#9e9e9e'}}>
-          <FaPowerOff /> FORA DE ÁREA
-        </div>
-      )}
       {patient.statusDispositivo === 'desligada' && (
         <div className={styles.alertBanner} style={{backgroundColor: '#757575'}}>
           <FaPowerOff /> PULSEIRA DESLIGADA

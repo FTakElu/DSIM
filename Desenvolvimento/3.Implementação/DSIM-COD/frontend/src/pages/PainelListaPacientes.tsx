@@ -102,9 +102,9 @@ const PainelListaPacientes: React.FC = () => {
   useEffect(() => {
     fetchPacientes();
     
-    // Polling automático a cada 10 segundos para atualizar dados
+    // Polling automático a cada 10 segundos (silencioso para não travar a tela)
     const interval = setInterval(() => {
-      fetchPacientes();
+      fetchPacientes(true); // true = modo silencioso
     }, 10000);
     
     return () => clearInterval(interval);
@@ -122,9 +122,11 @@ const PainelListaPacientes: React.FC = () => {
     }
   }, [lastAlert]);
 
-  const fetchPacientes = async () => {
+  const fetchPacientes = async (silent = false) => {
     try {
-      setLoading(true);
+      if (!silent) {
+        setLoading(true);
+      }
       setError(null);
 
       const response = await api.get('/api/pacientes');
@@ -133,10 +135,14 @@ const PainelListaPacientes: React.FC = () => {
 
     } catch (e: any) {
       console.error("Falha ao buscar pacientes:", e);
-      const errorMsg = e.response?.data?.message || e.message || "Não foi possível carregar os pacientes.";
-      setError(errorMsg);
+      if (!silent) {
+        const errorMsg = e.response?.data?.message || e.message || "Não foi possível carregar os pacientes.";
+        setError(errorMsg);
+      }
     } finally {
-      setLoading(false);
+      if (!silent) {
+        setLoading(false);
+      }
     }
   };
   
