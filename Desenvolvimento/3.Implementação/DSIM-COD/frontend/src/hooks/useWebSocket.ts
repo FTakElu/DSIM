@@ -56,13 +56,20 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
   useEffect(() => {
     if (!autoConnect) return;
 
-    // Criar conexão Socket.io com WebSocket API Gateway
+    // Desabilitar WebSocket em produção (apenas localhost funciona)
+    const isLocalhost = WS_URL.includes('localhost') || WS_URL.includes('127.0.0.1');
+    
+    if (!isLocalhost) {
+      console.log('⚠️ WebSocket desabilitado em produção. Use localhost para tempo real.');
+      return;
+    }
+
+    // Criar conexão Socket.io (apenas localhost)
     const socket = io(WS_URL, {
       transports: ['websocket', 'polling'],
       reconnection: true,
       reconnectionDelay: 1000,
       reconnectionAttempts: 5,
-      path: '/socket.io/',
     });
 
     socketRef.current = socket;
