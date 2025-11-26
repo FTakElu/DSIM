@@ -238,6 +238,10 @@ router.get('/', async (req: AuthRequest, res: Response): Promise<void> => {
           try {
             // Buscar dados mais recentes do sensor (últimos 5 minutos)
             const fiveMinutesAgo = Date.now() - (5 * 60 * 1000);
+            console.log(`🔍 Verificando status do dispositivo ${patient.deviceId}`);
+            console.log(`   Timestamp atual: ${Date.now()}`);
+            console.log(`   Timestamp 5min: ${fiveMinutesAgo}`);
+            
             const sensorResult = await dynamoDB.send(
               new ScanCommand({
                 TableName: TABLES.SENSOR_DATA,
@@ -253,6 +257,11 @@ router.get('/', async (req: AuthRequest, res: Response): Promise<void> => {
               })
             );
             
+            console.log(`   Dados encontrados: ${sensorResult.Items?.length || 0}`);
+            if (sensorResult.Items && sensorResult.Items.length > 0) {
+              console.log(`   Último timestamp: ${sensorResult.Items[0].timestamp}`);
+            }
+            
             // Se tem dados recentes, dispositivo está online
             if (sensorResult.Items && sensorResult.Items.length > 0) {
               patient.statusDispositivo = 'online';
@@ -262,7 +271,7 @@ router.get('/', async (req: AuthRequest, res: Response): Promise<void> => {
               patient.status = 'offline';
             }
           } catch (error) {
-            console.error(`Erro ao verificar status do dispositivo ${patient.deviceId}:`, error);
+            console.error(`❌ Erro ao verificar status do dispositivo ${patient.deviceId}:`, error);
             patient.statusDispositivo = 'offline';
           }
         } else {
