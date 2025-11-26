@@ -100,7 +100,14 @@ const PainelListaPacientes: React.FC = () => {
   });
 
   useEffect(() => {
-    fetchPacientes(); 
+    fetchPacientes();
+    
+    // Polling automático a cada 10 segundos para atualizar dados
+    const interval = setInterval(() => {
+      fetchPacientes();
+    }, 10000);
+    
+    return () => clearInterval(interval);
   }, []); 
 
   useEffect(() => {
@@ -147,23 +154,6 @@ const PainelListaPacientes: React.FC = () => {
       <section className={styles.titleSection}>
         <h1>Lista de pacientes</h1>
         <p>Autonomia para quem usa, tranquilidade para quem ama</p>
-        <div style={{ 
-          display: 'flex', 
-          alignItems: 'center', 
-          gap: '8px', 
-          marginTop: '8px',
-          fontSize: '14px',
-          color: isConnected ? '#22c55e' : '#ef4444'
-        }}>
-          <div style={{
-            width: '8px',
-            height: '8px',
-            borderRadius: '50%',
-            backgroundColor: isConnected ? '#22c55e' : '#ef4444',
-            animation: isConnected ? 'pulse 2s infinite' : 'none'
-          }} />
-          {isConnected ? '🔌 Tempo real ativo' : '❌ Tempo real desconectado'}
-        </div>
       </section>
       <main className={styles.gridContainer}>
         {patients.length === 0 ? (
