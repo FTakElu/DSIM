@@ -10,7 +10,7 @@
 
 // --- 1. Configurações de WiFi ---
 const char WIFI_SSID[] = "Nemtenta";
-const char WIFI_PASSWORD[] = "Toyo938912";
+const char WIFI_PASSWORD[] = "Tentoune";
 
 // --- 2. Configurações AWS IoT Core ---
 const char THINGNAME[] = "Pulseira_DSIM";
@@ -20,6 +20,7 @@ const char AWS_IOT_SUBSCRIBE_TOPIC[] = "pulseira/comandos";
 
 // --- 3. Pinos do Hardware ---
 const int LM35_PIN = A0;          // Pino analógico para LM35 (temperatura)
+const int BATTERY_PIN = A0;      // Se usar o mesmo ADC, ajuste conforme hardware (ou usar pino dedicado)
 const int BUTTON_POWER_PIN = 14;   // Botão de ligar/desligar (D5)
 const int BUTTON_PANIC_PIN = 12;   // Botão de pânico (D6)
 const int LED_BLUE_PIN = 13;       // LED azul - indica ligado (D7)
@@ -272,6 +273,29 @@ float readLM35Temperature() {
   return temp;
 }
 
+// Calcular percentual de bateria a partir de leitura analógica
+int readBatteryPercentage() {
+  // Leitura direta do ADC (0-1023). Dependendo do seu circuito, você deve
+  // calcular a tensão real da bateria considerando um divisor de tensão.
+  // Exemplo: se usar R1 entre bateria e ADC e R2 entre ADC e GND,
+  // batteryVoltage = analogRead(BATTERY_PIN) * (Vref / 1023) * ((R1 + R2) / R2)
+
+  int raw = analogRead(BATTERY_PIN);
+  float vref = 3.3; // tensão de referência do ADC (ajuste se necessário)
+  // Ajuste os valores abaixo de acordo com seu divisor de tensão físico
+  const float R1 = 100000.0; // ohms
+  const float R2 = 33000.0;  // ohms
+
+  float adcVoltage = (raw / 1023.0) * vref;
+  float batteryVoltage = adcVoltage * ((R1 + R2) / R2);
+
+  // Mapear para percentual entre BATTERY_MIN_VOLTAGE e BATTERY_MAX_VOLTAGE
+  float percentage = ((batteryVoltage - BATTERY_MIN_VOLTAGE) / (BATTERY_MAX_VOLTAGE - BATTERY_MIN_VOLTAGE)) * 100.0;
+  if (percentage > 100) percentage = 100;
+  if (percentage < 0) percentage = 0;
+  return (int)percentage;
+}
+
 // Ler dados do MAX30102 (SpO2 e BPM)
 void readMAX30102() {
   long irValue = particleSensor.getIR();
@@ -294,11 +318,15 @@ void readMAX30102() {
   }
   
   // Estimativa simples de SpO2 (requer calibração adequada)
-  // Para MAX30102, usar biblioteca SparkFun MAX3010x com algoritmo spo2_algorithm
+  // Para obter SpO2 real é necessário um algoritmo baseado nas leituras RED/IR
+  // (por exemplo: algoritmo da SparkFun ou outro algoritmo de fotopletismografia).
+  // Aqui evitamos gerar valores aleatórios — se não houver leitura válida, mantemos o último valor conhecido
   if (irValue < 50000) {
-    spo2 = 0; // Dedo não detectado
+    // Dedo não detectado — indicar ausência (0) ou manter último valor dependendo do seu caso de uso
+    spo2 = 0;
   } else {
-    spo2 = 95 + random(0, 5); // Simulação - SUBSTITUA pelo algoritmo real
+    // Placeholder: indicar que SpO2 precisa ser calculado por algoritmo apropriado
+    // Mantemos o valor atual (não inventamos dados)
   }
 }
 
@@ -353,7 +381,8 @@ void publishDeviceStatus(const char* status) {
   StaticJsonDocument<256> doc;
   doc["deviceId"] = THINGNAME;
   doc["status"] = status;
-  doc["timestamp"] = millis();
+  // Enviar timestamp em epoch (segundos) como Number para evitar mismatches no IoT Rule/DynamoDB
+  doc["timestamp"] = (long)time(nullptr);
   
   char jsonBuffer[256];
   serializeJson(doc, jsonBuffer);
@@ -369,7 +398,7 @@ void publishFallAlert() {
   StaticJsonDocument<256> doc;
   doc["deviceId"] = THINGNAME;
   doc["alerta"] = "queda_detectada";
-  doc["timestamp"] = millis();
+  doc["timestamp"] = (long)time(nullptr);
   doc["temperatura"] = temperature;
   doc["batimentos"] = beatAvg;
   
@@ -393,7 +422,7 @@ void publishSensorData() {
   doc["queda_detectada"] = fallDetected;
   doc["bateria"] = batteryPercentage;
   doc["status"] = deviceOn ? "online" : "offline";
-  doc["timestamp"] = millis();
+  doc["timestamp"] = (long)time(nullptr);
   
   char jsonBuffer[512];
   serializeJson(doc, jsonBuffer);
@@ -481,6 +510,12 @@ void setup() {
   } else {
     Serial.println("FALHA!");
   }
+  
+  // Inicializa buffer de rates para evitar valores garbage
+  for (byte i = 0; i < RATE_SIZE; i++) rates[i] = 0;
+
+  // Inicializar leitura de bateria (separar pino ADC se necessário)
+  batteryPercentage = readBatteryPercentage();
   
   Serial.println("\n✅ Setup completo!");
   Serial.println("Pressione o botão POWER para ligar a pulseira");
