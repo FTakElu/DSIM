@@ -237,11 +237,16 @@ router.get('/', async (req: AuthRequest, res: Response): Promise<void> => {
         if (patient.deviceId) {
           try {
             // Buscar dados mais recentes do sensor (últimos 5 minutos)
-            const fiveMinutesAgo = Date.now() - (5 * 60 * 1000);
+            // Observação: o firmware envia `timestamp` em epoch seconds (time(nullptr)).
+            // Aqui convertemos o intervalo para segundos para manter compatibilidade.
+            const nowMs = Date.now();
+            const fiveMinutesAgoMs = nowMs - (5 * 60 * 1000);
+            const fiveMinutesAgoSec = Math.floor(fiveMinutesAgoMs / 1000);
             console.log(`🔍 Verificando status do dispositivo ${patient.deviceId}`);
-            console.log(`   Timestamp atual: ${Date.now()}`);
-            console.log(`   Timestamp 5min: ${fiveMinutesAgo}`);
-            
+            console.log(`   Timestamp agora (ms): ${nowMs}`);
+            console.log(`   Timestamp 5min atrás (ms): ${fiveMinutesAgoMs}`);
+            console.log(`   Usando comparação em segundos: ${fiveMinutesAgoSec}`);
+
             const sensorResult = await dynamoDB.send(
               new ScanCommand({
                 TableName: TABLES.SENSOR_DATA,
@@ -251,7 +256,7 @@ router.get('/', async (req: AuthRequest, res: Response): Promise<void> => {
                 },
                 ExpressionAttributeValues: {
                   ':deviceId': patient.deviceId,
-                  ':timestamp': fiveMinutesAgo,
+                  ':timestamp': fiveMinutesAgoSec,
                 },
                 Limit: 1,
               })
