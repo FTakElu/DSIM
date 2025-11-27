@@ -111,10 +111,51 @@
   background-color: #dc3545;
 }
 
-.buttonGroup {
+.cardHeader {
   display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
+  justify-content: space-between; 
+  width: 100%;
+  margin-bottom: 0.5rem;
+}
+
+
+.editButton {
+  background: transparent; 
+  border: none;
+  cursor: pointer;
+  color: #333;
+  padding: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s;
+  width: auto; 
+}
+
+.editButton:hover {
+  transform: scale(1.1);
+  background-color: transparent;
+  color: #000;
+}
+
+
+.deleteButton {
+  background-color: #000; 
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  width: 32px;  
+  height: 32px; 
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s;
+  padding: 0; 
+}
+
+.deleteButton:hover {
+  background-color: #333;
 }
 
 .viewButton {
@@ -131,50 +172,10 @@
   text-align: center;
   text-decoration: none;
   display: inline-block;
+  margin-top: 1rem; /* Espaço extra em cima */
 }
 
 .viewButton:hover {
   background-color: #5a6268;
 }
 
-.editButton {
-  width: 100%;
-  padding: 0.75rem;
-  border: none;
-  background-color: #007bff;
-  color: white;
-  border-radius: 6px;
-  font-size: 1rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-}
-
-.editButton:hover {
-  background-color: #0056b3;
-}
-
-.deleteButton {
-  width: 100%;
-  padding: 0.75rem;
-  border: none;
-  background-color: #dc3545;
-  color: white;
-  border-radius: 6px;
-  font-size: 1rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-}
-
-.deleteButton:hover {
-  background-color: #a71d2a;
-}
