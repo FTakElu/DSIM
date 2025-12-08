@@ -1,0 +1,50 @@
+const express = require('express');
+const mqtt = require('mqtt');
+const cors = require('cors');
+
+const app = express();
+app.use(cors());
+
+//  BANCO DE DADOS - SIMULADOO
+let bancoDeDados = [];
+
+//  CONEXÃO COM O BROKER MQTT LOCAL
+const client = mqtt.connect('mqtt://localhost:1883');
+
+client.on('connect', () => {
+    console.log('Backend conectado ao MQTT Local!');
+    client.subscribe('pulseira/dados');
+});
+
+client.on('message', (topic, message) => {
+    const dados = JSON.parse(message.toString());
+    const registro = { timestamp: new Date(), ...dados };
+    
+    bancoDeDados.push(registro);
+    //LIMITE de 20 requisições
+    if (bancoDeDados.length > 20) bancoDeDados.shift();
+    
+    console.log('Dado salvo:', registro);
+});
+
+//  ROTA DO SITE 
+app.get('/', (req, res) => {
+    res.send(`
+        <html>
+        <head><meta refresh="2"></head> <body style="font-family: Arial; text-align: center;">
+            <h1>DSIM (Cenário 1)</h1>
+            <hr>
+            <h2> Sinais Vitais</h2>
+            <div style="background: #f4f4f4; padding: 20px; display: inline-block;">
+                ${bancoDeDados.map(d => 
+                    `<p>❤️ Bat: ${d.batimentos} | 💨 O2: ${d.oxigenacao}% | 🌡️ Temp: ${d.temperatura}°C</p>`
+                ).reverse().join('')}
+            </div>
+        </body>
+        </html>
+    `);
+});
+
+app.listen(3000, () => {
+    console.log('Servidor Monolítico rodando na porta 3000');
+});
