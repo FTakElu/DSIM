@@ -13,7 +13,7 @@ O objetivo desta etapa foi simular um ambiente centralizado e identificar suas l
 
 ## ⚠️ Status do Ambiente
 
-> **Nota:** O ambiente AWS (VPC Personalizada e Instância EC2) está ainda estáestruturado, já que o ambiente do cenário 2 foi construído em outra conta aws foi possível deixar o cenário 1 
+> **Nota:** O ambiente AWS (VPC Personalizada e Instância EC2) está ainda está estruturado, já que o ambiente do cenário 2 foi construído em outra conta aws foi possível deixar o cenário 1 
 
 ---
 
@@ -65,3 +65,4 @@ http://*{IP-PUBLICO-EC2}*:3000
 ---
 
 DSIM - Sistemas Distribuídos
+
